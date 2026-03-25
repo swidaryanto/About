@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>About</title>
+    <link rel="icon" type="image/png" href="./favicon.png" />
+    <style>
+      :root {
+        --bg: #ffffff;
+        --panel-bg: #f3f3f3;
+        --panel-line: #d6d6d6;
+        --spinner-track: #bdbdbd;
+        --spinner-head: #3f3f3f;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      body {
+        display: grid;
+        grid-template-columns: 30% 40% 30%;
+        align-items: center;
+        overflow: hidden;
+        background: var(--bg);
+        font-family: "Avenir Next", "Segoe UI", sans-serif;
+      }
+
+      .loading-card {
+        position: fixed;
+        left: 50%;
+        top: 50%;
+        width: 180px;
+        height: 80px;
+        border-radius: 16px;
+        border: 2px solid var(--panel-line);
+        background: var(--panel-bg);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        display: grid;
+        place-items: center;
+        transform: translate(-50%, -50%);
+        cursor: grab;
+        user-select: none;
+        touch-action: none;
+      }
+
+      .loading-card.dragging {
+        cursor: grabbing;
+      }
+
+      .spinners {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 47px;
+      }
+
+      .spinner {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        border: 4px solid var(--spinner-track);
+        border-top-color: var(--spinner-head);
+        animation: spin 760ms linear infinite;
+      }
+
+      .spinner:first-child {
+        animation-duration: 1520ms;
+      }
+
+      .spinner:nth-child(2) {
+        animation-duration: 820ms;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      @media (max-width: 760px) {
+        body {
+          grid-template-columns: 8% 84% 8%;
+        }
+
+        .loading-card {
+          width: 100%;
+          border-radius: 14px;
+          height: min(20vh, 120px);
+        }
+
+        .spinners {
+          gap: 30px;
+        }
+
+        .spinner {
+          width: 21px;
+          height: 21px;
+          border-width: 3px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <section class="loading-card" id="loadingCard" aria-label="Loading">
+      <div class="spinners">
+        <div class="spinner" aria-hidden="true"></div>
+        <div class="spinner" aria-hidden="true"></div>
+      </div>
+    </section>
+    <script>
+      const card = document.getElementById("loadingCard");
+      const storageKey = "about_loading_card_position_v1";
+
+      function cardRect() {
+        return card.getBoundingClientRect();
+      }
+
+      function clampPosition(left, top) {
+        const rect = cardRect();
+        const minLeft = 0;
+        const minTop = 0;
+        const maxLeft = window.innerWidth - rect.width;
+        const maxTop = window.innerHeight - rect.height;
+        return {
+          left: Math.max(minLeft, Math.min(maxLeft, left)),
+          top: Math.max(minTop, Math.min(maxTop, top))
+        };
+      }
+
+      function setCardPosition(left, top) {
+        const pos = clampPosition(left, top);
+        card.style.left = pos.left + "px";
+        card.style.top = pos.top + "px";
+        card.style.transform = "none";
+      }
+
+      function savePosition() {
+        const rect = cardRect();
+        const x = rect.left / window.innerWidth;
+        const y = rect.top / window.innerHeight;
+        localStorage.setItem(storageKey, JSON.stringify({ x, y }));
+      }
+
+      function restorePosition() {
+        const raw = localStorage.getItem(storageKey);
+        if (!raw) {
+          return;
+        }
+        try {
+          const { x, y } = JSON.parse(raw);
+          const left = x * window.innerWidth;
+          const top = y * window.innerHeight;
+          setCardPosition(left, top);
+        } catch (_error) {
+          localStorage.removeItem(storageKey);
+        }
+      }
+
+      restorePosition();
+
+      let dragging = false;
+      let offsetX = 0;
+      let offsetY = 0;
+
+      card.addEventListener("pointerdown", (event) => {
+        const rect = cardRect();
+        dragging = true;
+        offsetX = event.clientX - rect.left;
+        offsetY = event.clientY - rect.top;
+        card.classList.add("dragging");
+        card.setPointerCapture(event.pointerId);
+      });
+
+      card.addEventListener("pointermove", (event) => {
+        if (!dragging) {
+          return;
+        }
+        const left = event.clientX - offsetX;
+        const top = event.clientY - offsetY;
+        setCardPosition(left, top);
+      });
+
+      function stopDrag() {
+        if (!dragging) {
+          return;
+        }
+        dragging = false;
+        card.classList.remove("dragging");
+        savePosition();
+      }
+
+      card.addEventListener("pointerup", stopDrag);
+      card.addEventListener("pointercancel", stopDrag);
+
+      window.addEventListener("resize", () => {
+        const rect = cardRect();
+        setCardPosition(rect.left, rect.top);
+        savePosition();
+      });
+    </script>
+  </body>
+</html>
