@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>About</title>
     <link rel="icon" type="image/png" href="./favicon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
     <style>
       :root {
         --bg: #ffffff;
@@ -12,6 +18,7 @@
         --panel-line: #d6d6d6;
         --spinner-track: #bdbdbd;
         --spinner-head: #3f3f3f;
+        --ease-mac: cubic-bezier(0.22, 1, 0.36, 1);
       }
 
       * {
@@ -19,16 +26,14 @@
       }
 
       html,
-      body {
+      body,
+      #app {
         margin: 0;
         width: 100%;
         height: 100%;
       }
 
       body {
-        display: grid;
-        grid-template-columns: 30% 40% 30%;
-        align-items: center;
         overflow: hidden;
         background: var(--bg);
         font-family: "Inter", "Segoe UI", sans-serif;
@@ -36,20 +41,37 @@
 
       .loading-card {
         position: fixed;
-        left: 50%;
-        top: 50%;
         width: 180px;
         height: 80px;
         border-radius: 16px;
-        border: 2px solid var(--panel-line);
+        border: 1px solid var(--panel-line);
         background: var(--panel-bg);
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         display: grid;
         place-items: center;
-        transform: translate(-50%, -50%);
         cursor: grab;
         user-select: none;
         touch-action: none;
+      }
+
+      .curated-title {
+        position: fixed;
+        padding: 0;
+        color: #171717;
+        font-family: "Snell Roundhand", "Apple Chancery", "Brush Script MT", cursive;
+        font-size: 40px;
+        font-weight: 500;
+        letter-spacing: 0.01em;
+        line-height: 1;
+        cursor: grab;
+        user-select: none;
+        touch-action: none;
+        will-change: transform;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+      }
+
+      .curated-title.dragging {
+        cursor: grabbing;
       }
 
       .loading-card.dragging {
@@ -67,7 +89,7 @@
         width: 24px;
         height: 24px;
         border-radius: 50%;
-        border: 4px solid var(--spinner-track);
+        border: 3px solid var(--spinner-track);
         border-top-color: var(--spinner-head);
         animation: spin 760ms linear infinite;
       }
@@ -82,15 +104,15 @@
 
       .toast-panel {
         position: fixed;
-        right: 28px;
-        top: 50%;
         width: min(420px, calc(100vw - 44px));
         border-radius: 14px;
-        border: 2px solid var(--panel-line);
-        background: #ffffff;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        border: 1px solid var(--panel-line);
+        background: rgba(255, 255, 255, 0.92);
+        backdrop-filter: blur(8px) saturate(120%);
+        box-shadow:
+          0 1px 2px rgba(0, 0, 0, 0.06),
+          0 10px 30px rgba(0, 0, 0, 0.08);
         overflow: hidden;
-        transform: translateY(-50%);
         cursor: grab;
         user-select: none;
         touch-action: none;
@@ -103,7 +125,7 @@
       .toast-stage {
         position: relative;
         height: 170px;
-        border-bottom: 2px solid var(--panel-line);
+        border-bottom: 1px solid var(--panel-line);
         display: grid;
         place-items: center;
         padding: 14px;
@@ -125,54 +147,17 @@
         right: 14px;
         top: 50%;
         border-radius: 12px;
-        border: 2px solid #dbdbdb;
+        border: 1px solid #dbdbdb;
         background: #f8f8f8;
         padding: 12px 14px;
         color: #1d1d1d;
-        font-family: "Inter", "Segoe UI", sans-serif;
         font-size: 15px;
         font-weight: 500;
         line-height: 1.3;
         letter-spacing: -0.005em;
-        box-shadow: 0 8px 18px rgba(0, 0, 0, 0.1);
-        opacity: var(--stack-opacity, 1);
-        transform: translate3d(0, calc(-50% + var(--stack-y, 0px)), 0) scale(var(--stack-scale, 1));
-        z-index: var(--stack-z, 1);
-        will-change: transform, opacity;
-        transition:
-          opacity 190ms cubic-bezier(0.23, 1, 0.32, 1),
-          transform 300ms cubic-bezier(0.23, 1, 0.32, 1),
-          background-color 180ms ease;
-      }
-
-      .toast-item.is-new {
-        opacity: 0;
-        transform: translate3d(0, calc(-50% + 22px), 0) scale(0.97);
-      }
-
-      .toast-item.is-leaving {
-        opacity: 0;
-        transform: translate3d(0, calc(-50% - 20px), 0) scale(0.97);
-      }
-
-      .toast-item.depth-1 {
-        background: #f5f5f5;
-      }
-
-      .toast-item.depth-2 {
-        background: #f2f2f2;
-      }
-
-      .toast-item.fade {
-        transition:
-          opacity 170ms cubic-bezier(0.23, 1, 0.32, 1),
-          transform 170ms cubic-bezier(0.23, 1, 0.32, 1);
-      }
-
-      .toast-item.scale {
-        transition:
-          opacity 190ms cubic-bezier(0.23, 1, 0.32, 1),
-          transform 340ms cubic-bezier(0.23, 1, 0.32, 1);
+        box-shadow:
+          0 1px 2px rgba(0, 0, 0, 0.05),
+          0 10px 24px rgba(0, 0, 0, 0.09);
       }
 
       .toast-controls {
@@ -187,25 +172,28 @@
         height: 36px;
         min-width: 96px;
         padding: 0 10px;
-        border: 2px solid var(--panel-line);
+        border: 1px solid var(--panel-line);
         border-radius: 9px;
         background: #f8f8f8;
         color: #232323;
-        font-family: "Inter", "Segoe UI", sans-serif;
         font-size: 13px;
-        font-weight: 500;
+        font-weight: 700;
         line-height: 1;
         letter-spacing: -0.005em;
         cursor: pointer;
-        transition: transform 120ms ease, background 140ms ease;
+        transition:
+          transform 120ms var(--ease-mac),
+          background 180ms var(--ease-mac),
+          box-shadow 180ms var(--ease-mac);
       }
 
       .toast-control:hover {
         background: #efefef;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
       }
 
       .toast-control:active {
-        transform: scale(0.98);
+        transform: scale(0.975);
       }
 
       .toast-select-wrap {
@@ -237,14 +225,10 @@
       }
 
       @media (max-width: 760px) {
-        body {
-          grid-template-columns: 8% 84% 8%;
-        }
-
         .loading-card {
-          width: 100%;
+          width: 180px;
           border-radius: 14px;
-          height: min(20vh, 120px);
+          height: 80px;
         }
 
         .spinners {
@@ -258,12 +242,7 @@
         }
 
         .toast-panel {
-          right: 8px;
-          left: 8px;
-          top: auto;
-          bottom: 8px;
-          width: auto;
-          transform: none;
+          width: min(420px, calc(100vw - 16px));
         }
 
         .toast-stage {
@@ -284,274 +263,294 @@
     </style>
   </head>
   <body>
-    <section class="loading-card" id="loadingCard" aria-label="Loading">
-      <div class="spinners">
-        <div class="spinner" aria-hidden="true"></div>
-        <div class="spinner" aria-hidden="true"></div>
-      </div>
-    </section>
-    <section class="toast-panel" id="toastPanel" aria-label="Toast interaction">
-      <div class="toast-stage">
-        <div class="toast-layer" id="toastLayer" aria-live="polite" aria-atomic="true"></div>
-      </div>
-      <div class="toast-controls">
-        <button class="toast-control" id="addToastBtn" type="button">Add toast</button>
-        <div class="toast-select-wrap">
-          <select class="toast-control" id="transitionSelect" aria-label="Transition mode">
-            <option value="slide">Transitions</option>
-            <option value="fade">Fade</option>
-            <option value="scale">Scale</option>
-          </select>
-        </div>
-      </div>
-    </section>
-    <script>
-      const card = document.getElementById("loadingCard");
-      const storageKey = "about_loading_card_position_v1";
+    <div id="app"></div>
+    <script type="module">
+      import React, { useEffect, useMemo, useRef, useState } from "https://esm.sh/react@18.2.0";
+      import { createRoot } from "https://esm.sh/react-dom@18.2.0/client";
+      import { AnimatePresence, motion, useReducedMotion } from "https://esm.sh/framer-motion@11.2.10?deps=react@18.2.0";
 
-      function cardRect() {
-        return card.getBoundingClientRect();
+      function clamp(value, min, max) {
+        return Math.max(min, Math.min(max, value));
       }
 
-      function clampPosition(left, top) {
-        const rect = cardRect();
-        const minLeft = 0;
-        const minTop = 0;
-        const maxLeft = window.innerWidth - rect.width;
-        const maxTop = window.innerHeight - rect.height;
-        return {
-          left: Math.max(minLeft, Math.min(maxLeft, left)),
-          top: Math.max(minTop, Math.min(maxTop, top))
+      function getDefaultLoadingPos() {
+        return { x: window.innerWidth * 0.5 - 90, y: window.innerHeight * 0.5 - 40 };
+      }
+
+      function getDefaultTitlePos() {
+        return { x: window.innerWidth * 0.5 - 110, y: 24 };
+      }
+
+      function getDefaultToastPos() {
+        const width = Math.min(420, Math.max(240, window.innerWidth - 44));
+        const height = 252;
+        return { x: window.innerWidth - width - 28, y: window.innerHeight * 0.5 - height * 0.5 };
+      }
+
+      function useDraggablePosition(key, defaultPosFactory) {
+        const ref = useRef(null);
+        const [pos, setPos] = useState(() => defaultPosFactory());
+        const [dragging, setDragging] = useState(false);
+        const drag = useRef({ active: false, offsetX: 0, offsetY: 0 });
+
+        useEffect(() => {
+          const raw = localStorage.getItem(key);
+          if (!raw) return;
+          try {
+            const parsed = JSON.parse(raw);
+            if (typeof parsed.x === "number" && typeof parsed.y === "number") {
+              setPos({ x: parsed.x, y: parsed.y });
+            }
+          } catch {
+            localStorage.removeItem(key);
+          }
+        }, [key]);
+
+        useEffect(() => {
+          localStorage.setItem(key, JSON.stringify(pos));
+        }, [key, pos]);
+
+        useEffect(() => {
+          const onMove = (event) => {
+            if (!drag.current.active || !ref.current) return;
+            const rect = ref.current.getBoundingClientRect();
+            const left = event.clientX - drag.current.offsetX;
+            const top = event.clientY - drag.current.offsetY;
+            const nextX = clamp(left, 0, window.innerWidth - rect.width);
+            const nextY = clamp(top, 0, window.innerHeight - rect.height);
+            setPos({ x: nextX, y: nextY });
+          };
+
+          const onUp = () => {
+            drag.current.active = false;
+            setDragging(false);
+          };
+
+          window.addEventListener("pointermove", onMove);
+          window.addEventListener("pointerup", onUp);
+          window.addEventListener("pointercancel", onUp);
+          return () => {
+            window.removeEventListener("pointermove", onMove);
+            window.removeEventListener("pointerup", onUp);
+            window.removeEventListener("pointercancel", onUp);
+          };
+        }, []);
+
+        useEffect(() => {
+          const onResize = () => {
+            if (!ref.current) return;
+            const rect = ref.current.getBoundingClientRect();
+            setPos((prev) => ({
+              x: clamp(prev.x, 0, window.innerWidth - rect.width),
+              y: clamp(prev.y, 0, window.innerHeight - rect.height)
+            }));
+          };
+          window.addEventListener("resize", onResize);
+          return () => window.removeEventListener("resize", onResize);
+        }, []);
+
+        const onPointerDown = (event) => {
+          if (!ref.current) return;
+          const rect = ref.current.getBoundingClientRect();
+          drag.current.active = true;
+          drag.current.offsetX = event.clientX - rect.left;
+          drag.current.offsetY = event.clientY - rect.top;
+          setDragging(true);
+          event.currentTarget.setPointerCapture(event.pointerId);
         };
+
+        return { ref, pos, dragging, onPointerDown };
       }
 
-      function setCardPosition(left, top) {
-        const pos = clampPosition(left, top);
-        card.style.left = pos.left + "px";
-        card.style.top = pos.top + "px";
-        card.style.transform = "none";
+      function LoadingCard() {
+        const drag = useDraggablePosition("about_loading_card_position_v1", getDefaultLoadingPos);
+        return React.createElement(
+          "section",
+          {
+            ref: drag.ref,
+            className: `loading-card${drag.dragging ? " dragging" : ""}`,
+            style: { left: `${drag.pos.x}px`, top: `${drag.pos.y}px` },
+            onPointerDown: drag.onPointerDown,
+            "aria-label": "Loading"
+          },
+          React.createElement(
+            "div",
+            { className: "spinners" },
+            React.createElement("div", { className: "spinner", "aria-hidden": "true" }),
+            React.createElement("div", { className: "spinner", "aria-hidden": "true" })
+          )
+        );
       }
 
-      function savePosition() {
-        const rect = cardRect();
-        const x = rect.left / window.innerWidth;
-        const y = rect.top / window.innerHeight;
-        localStorage.setItem(storageKey, JSON.stringify({ x, y }));
+      function CuratedTitle() {
+        const drag = useDraggablePosition("about_curated_title_position_v1", getDefaultTitlePos);
+        return React.createElement(
+          motion.div,
+          {
+            ref: drag.ref,
+            className: `curated-title${drag.dragging ? " dragging" : ""}`,
+            style: { left: `${drag.pos.x}px`, top: `${drag.pos.y}px` },
+            onPointerDown: drag.onPointerDown,
+            animate: {
+              opacity: [0.92, 1, 0.92],
+              textShadow: [
+                "0 1px 2px rgba(0,0,0,0.08)",
+                "0 2px 4px rgba(0,0,0,0.12)",
+                "0 1px 2px rgba(0,0,0,0.08)"
+              ]
+            },
+            transition: {
+              duration: 3.2,
+              ease: "easeInOut",
+              repeat: Infinity
+            },
+            whileTap: { scale: 0.985 }
+          },
+          "Curated animation."
+        );
       }
 
-      function restorePosition() {
-        const raw = localStorage.getItem(storageKey);
-        if (!raw) {
-          return;
-        }
-        try {
-          const { x, y } = JSON.parse(raw);
-          const left = x * window.innerWidth;
-          const top = y * window.innerHeight;
-          setCardPosition(left, top);
-        } catch (_error) {
-          localStorage.removeItem(storageKey);
-        }
-      }
+      function ToastPanel() {
+        const drag = useDraggablePosition("about_toast_panel_position_v2", getDefaultToastPos);
+        const [mode, setMode] = useState("slide");
+        const [toasts, setToasts] = useState([]);
+        const idRef = useRef(0);
+        const prefersReducedMotion = useReducedMotion();
 
-      restorePosition();
-
-      let dragging = false;
-      let offsetX = 0;
-      let offsetY = 0;
-
-      card.addEventListener("pointerdown", (event) => {
-        const rect = cardRect();
-        dragging = true;
-        offsetX = event.clientX - rect.left;
-        offsetY = event.clientY - rect.top;
-        card.classList.add("dragging");
-        card.setPointerCapture(event.pointerId);
-      });
-
-      card.addEventListener("pointermove", (event) => {
-        if (!dragging) {
-          return;
-        }
-        const left = event.clientX - offsetX;
-        const top = event.clientY - offsetY;
-        setCardPosition(left, top);
-      });
-
-      function stopDrag() {
-        if (!dragging) {
-          return;
-        }
-        dragging = false;
-        card.classList.remove("dragging");
-        savePosition();
-      }
-
-      card.addEventListener("pointerup", stopDrag);
-      card.addEventListener("pointercancel", stopDrag);
-
-      window.addEventListener("resize", () => {
-        const rect = cardRect();
-        setCardPosition(rect.left, rect.top);
-        savePosition();
-      });
-
-      const toastLayer = document.getElementById("toastLayer");
-      const addToastBtn = document.getElementById("addToastBtn");
-      const transitionSelect = document.getElementById("transitionSelect");
-      const toastPanel = document.getElementById("toastPanel");
-      const toastPanelStorageKey = "about_toast_panel_position_v1";
-      const stack = [];
-      const toastElements = new Map();
-      let toastCounter = 0;
-      const MAX_STACK = 3;
-
-      function ensureToastElement(item) {
-        let el = toastElements.get(item.id);
-        if (!el) {
-          el = document.createElement("article");
-          el.className = "toast-item is-new";
-          el.textContent = item.text;
-          toastLayer.appendChild(el);
-          toastElements.set(item.id, el);
-          requestAnimationFrame(() => {
-            el.classList.remove("is-new");
-          });
-        }
-        return el;
-      }
-
-      function applyTransitionMode(el) {
-        el.classList.remove("fade", "scale");
-        const mode = transitionSelect.value;
-        if (mode === "fade") el.classList.add("fade");
-        if (mode === "scale") el.classList.add("scale");
-      }
-
-      function layoutStack() {
-        stack.forEach((item, index) => {
-          const el = ensureToastElement(item);
-          applyTransitionMode(el);
-          el.classList.toggle("depth-1", index === 1);
-          el.classList.toggle("depth-2", index === 2);
-          el.style.setProperty("--stack-y", `${index * -12}px`);
-          el.style.setProperty("--stack-scale", `${1 - index * 0.02}`);
-          el.style.setProperty("--stack-opacity", `${1 - index * 0.08}`);
-          el.style.setProperty("--stack-z", `${30 - index}`);
-        });
-      }
-
-      function removeToast(id) {
-        const el = toastElements.get(id);
-        if (!el) return;
-        el.classList.add("is-leaving");
-        setTimeout(() => {
-          if (el.parentNode) el.parentNode.removeChild(el);
-          toastElements.delete(id);
-        }, 210);
-      }
-
-      addToastBtn.addEventListener("click", () => {
-        const toast = { id: ++toastCounter, text: "This is a Sonner toast" };
-        stack.unshift(toast);
-        if (stack.length > MAX_STACK) {
-          const removed = stack.pop();
-          if (removed) removeToast(removed.id);
-        }
-        layoutStack();
-      });
-
-      transitionSelect.addEventListener("change", () => {
-        layoutStack();
-      });
-
-      function toastPanelRect() {
-        return toastPanel.getBoundingClientRect();
-      }
-
-      function clampToastPanel(left, top) {
-        const rect = toastPanelRect();
-        const minLeft = 0;
-        const minTop = 0;
-        const maxLeft = window.innerWidth - rect.width;
-        const maxTop = window.innerHeight - rect.height;
-        return {
-          left: Math.max(minLeft, Math.min(maxLeft, left)),
-          top: Math.max(minTop, Math.min(maxTop, top))
+        const addToast = () => {
+          idRef.current += 1;
+          setToasts((prev) => [{ id: idRef.current, text: "This is a Sonner toast" }, ...prev].slice(0, 3));
         };
+
+        const variants = useMemo(
+          () => ({
+            initial: (idx) => {
+              if (prefersReducedMotion) return { opacity: 0, y: -idx * 10, scale: 1 - idx * 0.01 };
+              if (mode === "fade") return { opacity: 0, y: -idx * 10, scale: 1 - idx * 0.015 };
+              if (mode === "scale") return { opacity: 0, y: -idx * 10 + 5, scale: 0.86 - idx * 0.012 };
+              return { opacity: 0, y: -idx * 10 + 18, scale: 0.97 - idx * 0.015 };
+            },
+            animate: (idx) => ({
+              opacity: 1 - idx * 0.08,
+              y: -idx * 10,
+              scale: 1 - idx * 0.015
+            }),
+            exit: (idx) => {
+              if (prefersReducedMotion) return { opacity: 0, y: -idx * 10 - 6, scale: 1 - idx * 0.01 };
+              if (mode === "fade") return { opacity: 0, y: -idx * 10 - 2, scale: 1 - idx * 0.015 };
+              if (mode === "scale") return { opacity: 0, y: -idx * 10 - 8, scale: 0.88 - idx * 0.012 };
+              return { opacity: 0, y: -idx * 10 - 14, scale: 0.98 - idx * 0.015 };
+            }
+          }),
+          [mode, prefersReducedMotion]
+        );
+
+        const itemTransition = prefersReducedMotion
+          ? { duration: 0.12, ease: "easeOut" }
+          : mode === "scale"
+            ? {
+                type: "spring",
+                stiffness: 240,
+                damping: 28,
+                mass: 0.95,
+                opacity: { duration: 0.18, ease: [0.22, 1, 0.36, 1] }
+              }
+            : {
+                type: "spring",
+                stiffness: 300,
+                damping: 30,
+                mass: 0.9,
+                opacity: { duration: 0.2, ease: [0.22, 1, 0.36, 1] }
+              };
+
+        const stopDragOnControl = (event) => {
+          event.stopPropagation();
+        };
+
+        return React.createElement(
+          "section",
+          {
+            ref: drag.ref,
+            className: `toast-panel${drag.dragging ? " dragging" : ""}`,
+            style: { left: `${drag.pos.x}px`, top: `${drag.pos.y}px` },
+            onPointerDown: drag.onPointerDown,
+            "aria-label": "Toast interaction"
+          },
+          React.createElement(
+            "div",
+            { className: "toast-stage" },
+            React.createElement(
+              "div",
+              { className: "toast-layer", "aria-live": "polite", "aria-atomic": "true" },
+              React.createElement(
+                AnimatePresence,
+                { initial: false },
+                toasts.map((toast, idx) =>
+                  React.createElement(
+                    motion.article,
+                    {
+                      key: toast.id,
+                      className: `toast-item${idx === 1 ? " depth-1" : ""}${idx === 2 ? " depth-2" : ""}${mode === "fade" ? " fade" : ""}${mode === "scale" ? " scale" : ""}`,
+                      custom: idx,
+                      layout: "position",
+                      initial: "initial",
+                      animate: "animate",
+                      exit: "exit",
+                      variants,
+                      transition: itemTransition,
+                      style: { zIndex: 30 - idx }
+                    },
+                    toast.text
+                  )
+                )
+              )
+            )
+          ),
+          React.createElement(
+            "div",
+            { className: "toast-controls" },
+            React.createElement(
+              "button",
+              {
+                className: "toast-control",
+                type: "button",
+                "data-no-drag": "true",
+                onPointerDown: stopDragOnControl,
+                onClick: addToast
+              },
+              "Add toast"
+            ),
+            React.createElement(
+              "div",
+              { className: "toast-select-wrap", "data-no-drag": "true", onPointerDown: stopDragOnControl },
+              React.createElement(
+                "select",
+                {
+                  className: "toast-control",
+                  value: mode,
+                  onChange: (e) => setMode(e.target.value),
+                  "aria-label": "Transition mode"
+                },
+                React.createElement("option", { value: "slide" }, "Transitions"),
+                React.createElement("option", { value: "fade" }, "Fade"),
+                React.createElement("option", { value: "scale" }, "Scale")
+              )
+            )
+          )
+        );
       }
 
-      function setToastPanelPosition(left, top) {
-        const pos = clampToastPanel(left, top);
-        toastPanel.style.left = pos.left + "px";
-        toastPanel.style.top = pos.top + "px";
-        toastPanel.style.right = "auto";
-        toastPanel.style.bottom = "auto";
-        toastPanel.style.transform = "none";
+      function App() {
+        return React.createElement(
+          React.Fragment,
+          null,
+          React.createElement(CuratedTitle),
+          React.createElement(LoadingCard),
+          React.createElement(ToastPanel)
+        );
       }
 
-      function saveToastPanelPosition() {
-        const rect = toastPanelRect();
-        const x = rect.left / window.innerWidth;
-        const y = rect.top / window.innerHeight;
-        localStorage.setItem(toastPanelStorageKey, JSON.stringify({ x, y }));
-      }
-
-      function restoreToastPanelPosition() {
-        const raw = localStorage.getItem(toastPanelStorageKey);
-        if (!raw) {
-          return;
-        }
-        try {
-          const { x, y } = JSON.parse(raw);
-          setToastPanelPosition(x * window.innerWidth, y * window.innerHeight);
-        } catch (_error) {
-          localStorage.removeItem(toastPanelStorageKey);
-        }
-      }
-
-      restoreToastPanelPosition();
-
-      let toastDragging = false;
-      let toastOffsetX = 0;
-      let toastOffsetY = 0;
-
-      toastPanel.addEventListener("pointerdown", (event) => {
-        if (event.target.closest(".toast-control")) {
-          return;
-        }
-        const rect = toastPanelRect();
-        toastDragging = true;
-        toastOffsetX = event.clientX - rect.left;
-        toastOffsetY = event.clientY - rect.top;
-        toastPanel.classList.add("dragging");
-        toastPanel.setPointerCapture(event.pointerId);
-      });
-
-      toastPanel.addEventListener("pointermove", (event) => {
-        if (!toastDragging) {
-          return;
-        }
-        setToastPanelPosition(event.clientX - toastOffsetX, event.clientY - toastOffsetY);
-      });
-
-      function stopToastDrag() {
-        if (!toastDragging) {
-          return;
-        }
-        toastDragging = false;
-        toastPanel.classList.remove("dragging");
-        saveToastPanelPosition();
-      }
-
-      toastPanel.addEventListener("pointerup", stopToastDrag);
-      toastPanel.addEventListener("pointercancel", stopToastDrag);
-
-      window.addEventListener("resize", () => {
-        const rect = toastPanelRect();
-        setToastPanelPosition(rect.left, rect.top);
-        saveToastPanelPosition();
-      });
+      createRoot(document.getElementById("app")).render(React.createElement(App));
     </script>
   </body>
 </html>
