@@ -11,6 +11,14 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap"
       rel="stylesheet"
     />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wght@8..144,300..800&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&display=swap"
+      rel="stylesheet"
+    />
     <style>
       :root {
         --bg: #ffffff;
@@ -54,20 +62,49 @@
         touch-action: none;
       }
 
+      .loading-banner {
+        position: fixed;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 22px;
+        height: 22px;
+        color: #7f5af0;
+        user-select: none;
+        pointer-events: auto;
+        cursor: grab;
+        touch-action: none;
+      }
+
+      .loading-banner.dragging {
+        cursor: grabbing;
+      }
+
+      .loading-braille {
+        font-family: "IBM Plex Mono", "SF Mono", "JetBrains Mono", "Cascadia Mono", monospace;
+        font-size: 22px;
+        line-height: 1;
+        letter-spacing: 0;
+        text-rendering: geometricPrecision;
+      }
+
       .curated-title {
         position: fixed;
         padding: 0;
         color: #171717;
-        font-family: "Snell Roundhand", "Apple Chancery", "Brush Script MT", cursive;
-        font-size: 40px;
-        font-weight: 500;
-        letter-spacing: 0.01em;
+        font-family: "Roboto Flex", "Inter", sans-serif;
+        font-size: 28px;
+        font-weight: 520;
+        letter-spacing: -0.015em;
         line-height: 1;
         cursor: grab;
         user-select: none;
         touch-action: none;
         will-change: transform;
         text-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+        font-optical-sizing: auto;
+        font-variation-settings: "opsz" 28, "wght" 520;
+        animation: curatedPulse 4.8s var(--ease-mac) infinite;
       }
 
       .curated-title.dragging {
@@ -224,6 +261,31 @@
         }
       }
 
+      @keyframes curatedPulse {
+        0%,
+        100% {
+          font-variation-settings: "opsz" 28, "wght" 500;
+          letter-spacing: -0.015em;
+          transform: translateY(0);
+        }
+
+        50% {
+          font-variation-settings: "opsz" 28, "wght" 760;
+          letter-spacing: -0.03em;
+          transform: translateY(-0.5px);
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .curated-title {
+          animation: none;
+        }
+
+        .loading-braille {
+          animation: none;
+        }
+      }
+
       @media (max-width: 760px) {
         .loading-card {
           width: 180px;
@@ -259,6 +321,11 @@
           font-size: 12px;
           padding: 0 8px;
         }
+
+        .loading-banner {
+          left: 12px;
+          top: 12px;
+        }
       }
     </style>
   </head>
@@ -275,6 +342,15 @@
 
       function getDefaultLoadingPos() {
         return { x: window.innerWidth * 0.5 - 90, y: window.innerHeight * 0.5 - 40 };
+      }
+
+      function getDefaultBannerPos() {
+        if (window.innerWidth <= 760) return { x: 12, y: 12 };
+        return { x: 16, y: 20 };
+      }
+
+      function getLoadingCardOffset(index) {
+        return { x: index * 24, y: index * 18 };
       }
 
       function getDefaultTitlePos() {
@@ -362,15 +438,18 @@
         return { ref, pos, dragging, onPointerDown };
       }
 
-      function LoadingCard() {
-        const drag = useDraggablePosition("about_loading_card_position_v1", getDefaultLoadingPos);
+      function LoadingCard({ card, dragging, isTop, onPointerDown, onDuplicate }) {
         return React.createElement(
           "section",
           {
-            ref: drag.ref,
-            className: `loading-card${drag.dragging ? " dragging" : ""}`,
-            style: { left: `${drag.pos.x}px`, top: `${drag.pos.y}px` },
-            onPointerDown: drag.onPointerDown,
+            className: `loading-card${dragging ? " dragging" : ""}`,
+            style: {
+              left: `${card.pos.x}px`,
+              top: `${card.pos.y}px`,
+              zIndex: dragging || isTop ? 3 : 2
+            },
+            onPointerDown,
+            onDoubleClick: onDuplicate,
             "aria-label": "Loading"
           },
           React.createElement(
@@ -379,6 +458,114 @@
             React.createElement("div", { className: "spinner", "aria-hidden": "true" }),
             React.createElement("div", { className: "spinner", "aria-hidden": "true" })
           )
+        );
+      }
+
+      function LoadingStack() {
+        const [cards, setCards] = useState(() => [{ id: 1, pos: getDefaultLoadingPos() }]);
+        const drag = useRef({ active: false, id: null, offsetX: 0, offsetY: 0 });
+        const [activeId, setActiveId] = useState(null);
+        const nextId = useRef(1);
+
+        useEffect(() => {
+          const onMove = (event) => {
+            if (!drag.current.active) return;
+            setCards((prev) =>
+              prev.map((card) => {
+                if (card.id !== drag.current.id) return card;
+                const nextX = clamp(event.clientX - drag.current.offsetX, 0, window.innerWidth - 180);
+                const nextY = clamp(event.clientY - drag.current.offsetY, 0, window.innerHeight - 80);
+                return { ...card, pos: { x: nextX, y: nextY } };
+              })
+            );
+          };
+
+          const onUp = () => {
+            drag.current.active = false;
+            drag.current.id = null;
+            setActiveId(null);
+          };
+
+          window.addEventListener("pointermove", onMove);
+          window.addEventListener("pointerup", onUp);
+          window.addEventListener("pointercancel", onUp);
+          return () => {
+            window.removeEventListener("pointermove", onMove);
+            window.removeEventListener("pointerup", onUp);
+            window.removeEventListener("pointercancel", onUp);
+          };
+        }, []);
+
+        const startDrag = (id) => (event) => {
+          if (event.button !== 0) return;
+          const rect = event.currentTarget.getBoundingClientRect();
+          drag.current.active = true;
+          drag.current.id = id;
+          drag.current.offsetX = event.clientX - rect.left;
+          drag.current.offsetY = event.clientY - rect.top;
+          setActiveId(id);
+          event.currentTarget.setPointerCapture(event.pointerId);
+        };
+
+        const addCopy = (sourceId) => {
+          setCards((prev) => {
+            const source = prev.find((card) => card.id === sourceId);
+            if (!source) return prev;
+
+            nextId.current += 1;
+            const offset = getLoadingCardOffset(prev.length);
+            const card = {
+              id: nextId.current,
+              pos: {
+                x: clamp(source.pos.x + offset.x, 0, window.innerWidth - 180),
+                y: clamp(source.pos.y + offset.y, 0, window.innerHeight - 80)
+              }
+            };
+
+            return [...prev, card];
+          });
+        };
+
+        return React.createElement(
+          React.Fragment,
+          null,
+          cards.map((card, index) =>
+            React.createElement(LoadingCard, {
+              key: card.id,
+              card,
+              dragging: activeId === card.id,
+              isTop: index === cards.length - 1,
+              onPointerDown: startDrag(card.id),
+              onDuplicate: () => addCopy(card.id)
+            })
+          )
+        );
+      }
+
+      function LoadingBanner() {
+        const frames = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
+        const [frame, setFrame] = useState(0);
+        const prefersReducedMotion = useReducedMotion();
+        const drag = useDraggablePosition("about_loading_braille_position_v1", getDefaultBannerPos);
+
+        useEffect(() => {
+          if (prefersReducedMotion) return;
+          const id = window.setInterval(() => {
+            setFrame((prev) => (prev + 1) % frames.length);
+          }, 88);
+          return () => window.clearInterval(id);
+        }, [prefersReducedMotion]);
+
+        return React.createElement(
+          "div",
+          {
+            ref: drag.ref,
+            className: `loading-banner${drag.dragging ? " dragging" : ""}`,
+            style: { left: `${drag.pos.x}px`, top: `${drag.pos.y}px` },
+            onPointerDown: drag.onPointerDown,
+            "aria-label": "Loading status"
+          },
+          React.createElement("span", { className: "loading-braille", "aria-hidden": "true" }, frames[prefersReducedMotion ? 0 : frame])
         );
       }
 
@@ -544,8 +731,9 @@
         return React.createElement(
           React.Fragment,
           null,
+          React.createElement(LoadingBanner),
           React.createElement(CuratedTitle),
-          React.createElement(LoadingCard),
+          React.createElement(LoadingStack),
           React.createElement(ToastPanel)
         );
       }
