@@ -68,7 +68,7 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        width: 22px;
+        width: 28px;
         height: 22px;
         color: var(--braille-spinner);
         user-select: none;
@@ -87,6 +87,38 @@
         line-height: 1;
         letter-spacing: 0;
         text-rendering: geometricPrecision;
+      }
+
+      .loading-braille-trail {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 1.1ch;
+        height: 1em;
+      }
+
+      .loading-braille-layer {
+        position: absolute;
+        inset: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .loading-braille-ghost-1 {
+        opacity: 0.58;
+        transform: translateX(-0.015em);
+      }
+
+      .loading-braille-ghost-2 {
+        opacity: 0.3;
+        transform: translateX(-0.03em);
+      }
+
+      .loading-braille-ghost-3 {
+        opacity: 0.14;
+        transform: translateX(-0.045em);
       }
 
       .curated-title {
@@ -201,9 +233,15 @@
       .toast-controls {
         display: flex;
         align-items: center;
-        justify-content: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 8px 12px;
+      }
+
+      .toast-controls-left {
+        display: flex;
+        align-items: center;
         gap: 8px;
-        padding: 8px;
       }
 
       .toast-control {
@@ -232,6 +270,26 @@
 
       .toast-control:active {
         transform: scale(0.975);
+      }
+
+      .toast-reset {
+        min-width: auto;
+        padding: 0 4px;
+        border: none;
+        border-radius: 0;
+        background: transparent;
+        box-shadow: none;
+        color: #b25e5e;
+      }
+
+      .toast-reset:hover {
+        background: transparent;
+        box-shadow: none;
+        color: #9f4d4d;
+      }
+
+      .toast-reset:active {
+        transform: scale(0.985);
       }
 
       .toast-select-wrap {
@@ -348,6 +406,11 @@
       function getDefaultBannerPos() {
         if (window.innerWidth <= 760) return { x: 12, y: 12 };
         return { x: 16, y: 20 };
+      }
+
+      function getDefaultBannerTrailPos() {
+        if (window.innerWidth <= 760) return { x: 44, y: 12 };
+        return { x: 50, y: 20 };
       }
 
       function getLoadingCardOffset(index) {
@@ -543,19 +606,37 @@
         );
       }
 
-      function LoadingBanner() {
+      function BrailleSpinner({ storageKey, defaultPosFactory, trail }) {
         const frames = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
         const [frame, setFrame] = useState(0);
+        const [ghosts, setGhosts] = useState([]);
         const prefersReducedMotion = useReducedMotion();
-        const drag = useDraggablePosition("about_loading_braille_position_v1", getDefaultBannerPos);
+        const drag = useDraggablePosition(storageKey, defaultPosFactory);
+
+        useEffect(() => {
+          if (!trail) {
+            setGhosts([]);
+            return;
+          }
+          if (prefersReducedMotion) {
+            setGhosts([]);
+          }
+        }, [trail, prefersReducedMotion]);
 
         useEffect(() => {
           if (prefersReducedMotion) return;
           const id = window.setInterval(() => {
-            setFrame((prev) => (prev + 1) % frames.length);
+            setFrame((prev) => {
+              if (trail) {
+                setGhosts((prevGhosts) => [prev, ...prevGhosts].slice(0, 3));
+              }
+              return (prev + 1) % frames.length;
+            });
           }, 88);
           return () => window.clearInterval(id);
-        }, [prefersReducedMotion]);
+        }, [prefersReducedMotion, trail]);
+
+        const frameValue = frames[prefersReducedMotion ? 0 : frame];
 
         return React.createElement(
           "div",
@@ -566,7 +647,22 @@
             onPointerDown: drag.onPointerDown,
             "aria-label": "Loading status"
           },
-          React.createElement("span", { className: "loading-braille", "aria-hidden": "true" }, frames[prefersReducedMotion ? 0 : frame])
+          trail
+            ? React.createElement(
+                "span",
+                { className: "loading-braille loading-braille-trail", "aria-hidden": "true" },
+                ghosts[2] !== undefined
+                  ? React.createElement("span", { className: "loading-braille-layer loading-braille-ghost-3" }, frames[ghosts[2]])
+                  : null,
+                ghosts[1] !== undefined
+                  ? React.createElement("span", { className: "loading-braille-layer loading-braille-ghost-2" }, frames[ghosts[1]])
+                  : null,
+                ghosts[0] !== undefined
+                  ? React.createElement("span", { className: "loading-braille-layer loading-braille-ghost-1" }, frames[ghosts[0]])
+                  : null,
+                React.createElement("span", { className: "loading-braille-layer" }, frameValue)
+              )
+            : React.createElement("span", { className: "loading-braille", "aria-hidden": "true" }, frameValue)
         );
       }
 
@@ -608,6 +704,10 @@
         const addToast = () => {
           idRef.current += 1;
           setToasts((prev) => [{ id: idRef.current, text: "This is a Sonner toast" }, ...prev].slice(0, 3));
+        };
+
+        const resetToasts = () => {
+          setToasts([]);
         };
 
         const variants = useMemo(
@@ -698,31 +798,46 @@
             "div",
             { className: "toast-controls" },
             React.createElement(
+              "div",
+              { className: "toast-controls-left" },
+              React.createElement(
+                "button",
+                {
+                  className: "toast-control",
+                  type: "button",
+                  "data-no-drag": "true",
+                  onPointerDown: stopDragOnControl,
+                  onClick: addToast
+                },
+                "Add toast"
+              ),
+              React.createElement(
+                "div",
+                { className: "toast-select-wrap", "data-no-drag": "true", onPointerDown: stopDragOnControl },
+                React.createElement(
+                  "select",
+                  {
+                    className: "toast-control",
+                    value: mode,
+                    onChange: (e) => setMode(e.target.value),
+                    "aria-label": "Transition mode"
+                  },
+                  React.createElement("option", { value: "slide" }, "Transitions"),
+                  React.createElement("option", { value: "fade" }, "Fade"),
+                  React.createElement("option", { value: "scale" }, "Scale")
+                )
+              )
+            ),
+            React.createElement(
               "button",
               {
-                className: "toast-control",
+                className: "toast-control toast-reset",
                 type: "button",
                 "data-no-drag": "true",
                 onPointerDown: stopDragOnControl,
-                onClick: addToast
+                onClick: resetToasts
               },
-              "Add toast"
-            ),
-            React.createElement(
-              "div",
-              { className: "toast-select-wrap", "data-no-drag": "true", onPointerDown: stopDragOnControl },
-              React.createElement(
-                "select",
-                {
-                  className: "toast-control",
-                  value: mode,
-                  onChange: (e) => setMode(e.target.value),
-                  "aria-label": "Transition mode"
-                },
-                React.createElement("option", { value: "slide" }, "Transitions"),
-                React.createElement("option", { value: "fade" }, "Fade"),
-                React.createElement("option", { value: "scale" }, "Scale")
-              )
+              "Reset"
             )
           )
         );
@@ -732,7 +847,16 @@
         return React.createElement(
           React.Fragment,
           null,
-          React.createElement(LoadingBanner),
+          React.createElement(BrailleSpinner, {
+            storageKey: "about_loading_braille_position_v1",
+            defaultPosFactory: getDefaultBannerPos,
+            trail: false
+          }),
+          React.createElement(BrailleSpinner, {
+            storageKey: "about_loading_braille_position_v2",
+            defaultPosFactory: getDefaultBannerTrailPos,
+            trail: true
+          }),
           React.createElement(CuratedTitle),
           React.createElement(LoadingStack),
           React.createElement(ToastPanel)
