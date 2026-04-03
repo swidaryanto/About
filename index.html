@@ -63,13 +63,18 @@
         touch-action: none;
       }
 
-      .loading-banner {
+      .braille-panel {
         position: fixed;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        width: 28px;
-        height: 22px;
+        gap: 16px;
+        width: 120px;
+        height: 44px;
+        border-radius: 12px;
+        border: 1px solid var(--panel-line);
+        background: var(--panel-bg);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         color: var(--braille-spinner);
         user-select: none;
         pointer-events: auto;
@@ -77,13 +82,21 @@
         touch-action: none;
       }
 
-      .loading-banner.dragging {
+      .braille-panel.dragging {
         cursor: grabbing;
+      }
+
+      .braille-slot {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 22px;
       }
 
       .loading-braille {
         font-family: "IBM Plex Mono", "SF Mono", "JetBrains Mono", "Cascadia Mono", monospace;
-        font-size: 22px;
+        font-size: 20px;
         line-height: 1;
         letter-spacing: 0;
         text-rendering: geometricPrecision;
@@ -381,9 +394,19 @@
           padding: 0 8px;
         }
 
-        .loading-banner {
-          left: 12px;
-          top: 12px;
+        .braille-panel {
+          width: 104px;
+          height: 40px;
+          border-radius: 10px;
+          gap: 12px;
+        }
+
+        .braille-slot {
+          width: 24px;
+        }
+
+        .loading-braille {
+          font-size: 18px;
         }
       }
     </style>
@@ -403,14 +426,9 @@
         return { x: window.innerWidth * 0.5 - 90, y: window.innerHeight * 0.5 - 40 };
       }
 
-      function getDefaultBannerPos() {
+      function getDefaultBraillePanelPos() {
         if (window.innerWidth <= 760) return { x: 12, y: 12 };
         return { x: 16, y: 20 };
-      }
-
-      function getDefaultBannerTrailPos() {
-        if (window.innerWidth <= 760) return { x: 44, y: 12 };
-        return { x: 50, y: 20 };
       }
 
       function getLoadingCardOffset(index) {
@@ -606,35 +624,26 @@
         );
       }
 
-      function BrailleSpinner({ storageKey, defaultPosFactory, trail }) {
+      function BrailleSpinnerPanel() {
         const frames = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
         const [frame, setFrame] = useState(0);
         const [ghosts, setGhosts] = useState([]);
         const prefersReducedMotion = useReducedMotion();
-        const drag = useDraggablePosition(storageKey, defaultPosFactory);
+        const drag = useDraggablePosition("about_loading_braille_panel_position_v1", getDefaultBraillePanelPos);
 
         useEffect(() => {
-          if (!trail) {
+          if (prefersReducedMotion) {
             setGhosts([]);
             return;
           }
-          if (prefersReducedMotion) {
-            setGhosts([]);
-          }
-        }, [trail, prefersReducedMotion]);
-
-        useEffect(() => {
-          if (prefersReducedMotion) return;
           const id = window.setInterval(() => {
             setFrame((prev) => {
-              if (trail) {
-                setGhosts((prevGhosts) => [prev, ...prevGhosts].slice(0, 3));
-              }
+              setGhosts((prevGhosts) => [prev, ...prevGhosts].slice(0, 3));
               return (prev + 1) % frames.length;
             });
           }, 88);
           return () => window.clearInterval(id);
-        }, [prefersReducedMotion, trail]);
+        }, [prefersReducedMotion]);
 
         const frameValue = frames[prefersReducedMotion ? 0 : frame];
 
@@ -642,27 +651,34 @@
           "div",
           {
             ref: drag.ref,
-            className: `loading-banner${drag.dragging ? " dragging" : ""}`,
+            className: `braille-panel${drag.dragging ? " dragging" : ""}`,
             style: { left: `${drag.pos.x}px`, top: `${drag.pos.y}px` },
             onPointerDown: drag.onPointerDown,
             "aria-label": "Loading status"
           },
-          trail
-            ? React.createElement(
-                "span",
-                { className: "loading-braille loading-braille-trail", "aria-hidden": "true" },
-                ghosts[2] !== undefined
-                  ? React.createElement("span", { className: "loading-braille-layer loading-braille-ghost-3" }, frames[ghosts[2]])
-                  : null,
-                ghosts[1] !== undefined
-                  ? React.createElement("span", { className: "loading-braille-layer loading-braille-ghost-2" }, frames[ghosts[1]])
-                  : null,
-                ghosts[0] !== undefined
-                  ? React.createElement("span", { className: "loading-braille-layer loading-braille-ghost-1" }, frames[ghosts[0]])
-                  : null,
-                React.createElement("span", { className: "loading-braille-layer" }, frameValue)
-              )
-            : React.createElement("span", { className: "loading-braille", "aria-hidden": "true" }, frameValue)
+          React.createElement(
+            "span",
+            { className: "braille-slot" },
+            React.createElement("span", { className: "loading-braille", "aria-hidden": "true" }, frameValue)
+          ),
+          React.createElement(
+            "span",
+            { className: "braille-slot" },
+            React.createElement(
+              "span",
+              { className: "loading-braille loading-braille-trail", "aria-hidden": "true" },
+              ghosts[2] !== undefined
+                ? React.createElement("span", { className: "loading-braille-layer loading-braille-ghost-3" }, frames[ghosts[2]])
+                : null,
+              ghosts[1] !== undefined
+                ? React.createElement("span", { className: "loading-braille-layer loading-braille-ghost-2" }, frames[ghosts[1]])
+                : null,
+              ghosts[0] !== undefined
+                ? React.createElement("span", { className: "loading-braille-layer loading-braille-ghost-1" }, frames[ghosts[0]])
+                : null,
+              React.createElement("span", { className: "loading-braille-layer" }, frameValue)
+            )
+          )
         );
       }
 
@@ -847,16 +863,7 @@
         return React.createElement(
           React.Fragment,
           null,
-          React.createElement(BrailleSpinner, {
-            storageKey: "about_loading_braille_position_v1",
-            defaultPosFactory: getDefaultBannerPos,
-            trail: false
-          }),
-          React.createElement(BrailleSpinner, {
-            storageKey: "about_loading_braille_position_v2",
-            defaultPosFactory: getDefaultBannerTrailPos,
-            trail: true
-          }),
+          React.createElement(BrailleSpinnerPanel),
           React.createElement(CuratedTitle),
           React.createElement(LoadingStack),
           React.createElement(ToastPanel)
