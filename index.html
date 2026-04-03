@@ -266,17 +266,6 @@
           0 10px 24px rgba(0, 0, 0, 0.09);
       }
 
-      .toast-progress {
-        position: absolute;
-        left: 0;
-        top: 0;
-        height: 2px;
-        width: 100%;
-        transform-origin: left center;
-        background: linear-gradient(90deg, #8d8d8d 0%, #bdbdbd 100%);
-        opacity: 0.9;
-      }
-
       .toast-controls {
         display: flex;
         align-items: center;
@@ -1061,15 +1050,6 @@
                       transition: itemTransition,
                       style: { zIndex: 30 - idx }
                     },
-                    React.createElement(motion.span, {
-                      className: "toast-progress",
-                      initial: { scaleX: 1 },
-                      animate: { scaleX: 0 },
-                      transition: {
-                        duration: toast.duration / 1000,
-                        ease: "linear"
-                      }
-                    }),
                     React.createElement("span", null, toast.text)
                   )
                 )
