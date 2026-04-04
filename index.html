@@ -113,10 +113,10 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        gap: 16px;
-        width: 120px;
-        height: 44px;
-        border-radius: 12px;
+        gap: 44px;
+        width: 180px;
+        height: 80px;
+        border-radius: 16px;
         border: 1px solid var(--panel-line);
         background: var(--panel-bg);
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
@@ -135,8 +135,8 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        width: 28px;
-        height: 22px;
+        width: 32px;
+        height: 28px;
       }
 
       .loading-braille {
@@ -281,6 +281,10 @@
         padding: 14px;
       }
 
+      .toast-layer.idle-breathe {
+        animation: toastIdleBreathe 4.6s var(--ease-decorative) infinite;
+      }
+
       .toast-item {
         position: absolute;
         left: 14px;
@@ -322,6 +326,8 @@
       }
 
       .toast-control {
+        --mx: 0px;
+        --my: 0px;
         height: 36px;
         min-width: 96px;
         padding: 0 10px;
@@ -334,6 +340,7 @@
         line-height: 1;
         letter-spacing: -0.005em;
         cursor: pointer;
+        transform: translate3d(var(--mx), var(--my), 0);
         transition:
           transform var(--duration-utility-fast) var(--ease-utility),
           background var(--duration-utility) var(--ease-utility),
@@ -346,7 +353,7 @@
       }
 
       .toast-control:active {
-        transform: scale(0.975);
+        transform: translate3d(var(--mx), var(--my), 0) scale(0.975);
       }
 
       .toast-reset {
@@ -366,7 +373,7 @@
       }
 
       .toast-reset:active {
-        transform: scale(0.985);
+        transform: translate3d(var(--mx), var(--my), 0) scale(0.985);
       }
 
       .toast-select-wrap {
@@ -456,12 +463,27 @@
         }
       }
 
+      @keyframes toastIdleBreathe {
+        0%,
+        100% {
+          transform: translateY(0) scale(1);
+        }
+
+        50% {
+          transform: translateY(-1.2px) scale(1.008);
+        }
+      }
+
       @media (prefers-reduced-motion: reduce) {
         .curated-title {
           animation: none;
         }
 
         .loading-braille {
+          animation: none;
+        }
+
+        .toast-layer.idle-breathe {
           animation: none;
         }
 
@@ -511,14 +533,15 @@
         }
 
         .braille-panel {
-          width: 104px;
-          height: 40px;
-          border-radius: 10px;
-          gap: 12px;
+          width: 180px;
+          height: 80px;
+          border-radius: 16px;
+          gap: 40px;
         }
 
         .braille-slot {
-          width: 24px;
+          width: 30px;
+          height: 26px;
         }
 
         .loading-braille {
@@ -539,12 +562,32 @@
       }
 
       function getDefaultLoadingPos() {
-        return { x: window.innerWidth * 0.5 - 90, y: window.innerHeight * 0.5 - 40 };
+        const toast = getDefaultToastPos();
+        const toastWidth = Math.min(420, Math.max(240, window.innerWidth - 44));
+        if (window.innerWidth <= 760) {
+          return {
+            x: clamp(toast.x, 8, window.innerWidth - 188),
+            y: clamp(toast.y - 96, 12, window.innerHeight - 92)
+          };
+        }
+        return {
+          x: clamp(toast.x + toastWidth + 26, 24, window.innerWidth - 204),
+          y: clamp(toast.y + 4, 24, window.innerHeight - 104)
+        };
       }
 
       function getDefaultBraillePanelPos() {
-        if (window.innerWidth <= 760) return { x: 12, y: 12 };
-        return { x: 16, y: 20 };
+        const loading = getDefaultLoadingPos();
+        if (window.innerWidth <= 760) {
+          return {
+            x: clamp(loading.x + 38, 8, window.innerWidth - 112),
+            y: clamp(loading.y + 90, 12, window.innerHeight - 52)
+          };
+        }
+        return {
+          x: loading.x,
+          y: clamp(loading.y + 112, 24, window.innerHeight - 104)
+        };
       }
 
       function getLoadingCardOffset(index) {
@@ -552,16 +595,29 @@
       }
 
       function getDefaultTitlePos() {
-        return { x: window.innerWidth * 0.5 - 110, y: 24 };
+        const toast = getDefaultToastPos();
+        return {
+          x: clamp(toast.x, 16, window.innerWidth - 260),
+          y: clamp(toast.y - 86, 20, window.innerHeight - 60)
+        };
       }
 
       function getDefaultToastPos() {
         const width = Math.min(420, Math.max(240, window.innerWidth - 44));
         const height = 252;
-        return { x: window.innerWidth - width - 28, y: window.innerHeight * 0.5 - height * 0.5 };
+        if (window.innerWidth <= 760) {
+          return {
+            x: clamp((window.innerWidth - width) * 0.5, 8, window.innerWidth - width - 8),
+            y: clamp(window.innerHeight * 0.46, 160, window.innerHeight - height - 12)
+          };
+        }
+        return {
+          x: clamp(window.innerWidth * 0.5 - 320, 24, window.innerWidth - width - 24),
+          y: clamp(window.innerHeight * 0.36, 120, window.innerHeight - height - 24)
+        };
       }
 
-      function useDraggablePosition(key, defaultPosFactory, motionMode = "normal") {
+      function useDraggablePosition(defaultPosFactory) {
         const ref = useRef(null);
         const [pos, setPos] = useState(() => defaultPosFactory());
         const [dragging, setDragging] = useState(false);
@@ -569,30 +625,8 @@
           active: false,
           offsetX: 0,
           offsetY: 0,
-          lastX: 0,
-          lastY: 0,
-          lastTime: 0,
-          vx: 0,
-          vy: 0,
           rafId: 0
         });
-
-        useEffect(() => {
-          const raw = localStorage.getItem(key);
-          if (!raw) return;
-          try {
-            const parsed = JSON.parse(raw);
-            if (typeof parsed.x === "number" && typeof parsed.y === "number") {
-              setPos({ x: parsed.x, y: parsed.y });
-            }
-          } catch {
-            localStorage.removeItem(key);
-          }
-        }, [key]);
-
-        useEffect(() => {
-          localStorage.setItem(key, JSON.stringify(pos));
-        }, [key, pos]);
 
         useEffect(() => {
           const onMove = (event) => {
@@ -602,67 +636,12 @@
             const top = event.clientY - drag.current.offsetY;
             const nextX = clamp(left, 0, window.innerWidth - rect.width);
             const nextY = clamp(top, 0, window.innerHeight - rect.height);
-            const now = performance.now();
-            const deltaMs = Math.max(1, now - drag.current.lastTime);
-            drag.current.vx = (event.clientX - drag.current.lastX) / deltaMs;
-            drag.current.vy = (event.clientY - drag.current.lastY) / deltaMs;
-            drag.current.lastX = event.clientX;
-            drag.current.lastY = event.clientY;
-            drag.current.lastTime = now;
             setPos({ x: nextX, y: nextY });
           };
 
           const onUp = () => {
-            const shouldSnap = Math.hypot(drag.current.vx, drag.current.vy) > 0.01;
             drag.current.active = false;
             setDragging(false);
-            if (!shouldSnap || !ref.current) return;
-
-            const rect = ref.current.getBoundingClientRect();
-            const minX = 0;
-            const minY = 0;
-            const maxX = Math.max(0, window.innerWidth - rect.width);
-            const maxY = Math.max(0, window.innerHeight - rect.height);
-            const motionMomentum = motionMode === "calm" ? 14 : 22;
-            const motionFrictionBase = motionMode === "calm" ? 0.8 : 0.86;
-            const boundarySpring = motionMode === "calm" ? 0.16 : 0.22;
-            let vx = drag.current.vx * motionMomentum;
-            let vy = drag.current.vy * motionMomentum;
-            let x = rect.left;
-            let y = rect.top;
-            let last = performance.now();
-
-            const animate = (now) => {
-              const dt = Math.min(33, now - last);
-              last = now;
-              const friction = Math.pow(motionFrictionBase, dt / 16);
-              x += vx * (dt / 16);
-              y += vy * (dt / 16);
-              vx *= friction;
-              vy *= friction;
-
-              if (x < minX || x > maxX) {
-                const targetX = clamp(x, minX, maxX);
-                vx += (targetX - x) * boundarySpring;
-              }
-              if (y < minY || y > maxY) {
-                const targetY = clamp(y, minY, maxY);
-                vy += (targetY - y) * boundarySpring;
-              }
-
-              x = clamp(x, minX - 8, maxX + 8);
-              y = clamp(y, minY - 8, maxY + 8);
-              setPos({ x: clamp(x, minX, maxX), y: clamp(y, minY, maxY) });
-
-              if (Math.hypot(vx, vy) < (motionMode === "calm" ? 0.015 : 0.02)) {
-                drag.current.rafId = 0;
-                return;
-              }
-              drag.current.rafId = requestAnimationFrame(animate);
-            };
-
-            if (drag.current.rafId) cancelAnimationFrame(drag.current.rafId);
-            drag.current.rafId = requestAnimationFrame(animate);
           };
 
           window.addEventListener("pointermove", onMove);
@@ -674,7 +653,7 @@
             window.removeEventListener("pointercancel", onUp);
             if (drag.current.rafId) cancelAnimationFrame(drag.current.rafId);
           };
-        }, [motionMode]);
+        }, []);
 
         useEffect(() => {
           const onResize = () => {
@@ -699,11 +678,6 @@
           drag.current.active = true;
           drag.current.offsetX = event.clientX - rect.left;
           drag.current.offsetY = event.clientY - rect.top;
-          drag.current.lastX = event.clientX;
-          drag.current.lastY = event.clientY;
-          drag.current.lastTime = performance.now();
-          drag.current.vx = 0;
-          drag.current.vy = 0;
           setDragging(true);
           event.currentTarget.setPointerCapture(event.pointerId);
         };
@@ -779,70 +753,9 @@
           };
 
           const onUp = () => {
-            const releaseId = drag.current.id;
-            const releaseVelocity = Math.hypot(drag.current.vx, drag.current.vy);
             drag.current.active = false;
             drag.current.id = null;
             setActiveId(null);
-            if (!releaseId || releaseVelocity <= 0.01) return;
-
-            const motionMomentum = motionMode === "calm" ? 14 : 22;
-            const motionFrictionBase = motionMode === "calm" ? 0.8 : 0.86;
-            const boundarySpring = motionMode === "calm" ? 0.16 : 0.22;
-            let vx = drag.current.vx * motionMomentum;
-            let vy = drag.current.vy * motionMomentum;
-            let x = 0;
-            let y = 0;
-            const width = 180;
-            const height = 80;
-            setCards((prev) => {
-              const current = prev.find((card) => card.id === releaseId);
-              if (!current) return prev;
-              x = current.pos.x;
-              y = current.pos.y;
-              return prev;
-            });
-            let last = performance.now();
-
-            const animate = (now) => {
-              const dt = Math.min(33, now - last);
-              last = now;
-              const minX = 0;
-              const minY = 0;
-              const maxX = Math.max(0, window.innerWidth - width);
-              const maxY = Math.max(0, window.innerHeight - height);
-              const friction = Math.pow(motionFrictionBase, dt / 16);
-              x += vx * (dt / 16);
-              y += vy * (dt / 16);
-              vx *= friction;
-              vy *= friction;
-
-              if (x < minX || x > maxX) {
-                const targetX = clamp(x, minX, maxX);
-                vx += (targetX - x) * boundarySpring;
-              }
-              if (y < minY || y > maxY) {
-                const targetY = clamp(y, minY, maxY);
-                vy += (targetY - y) * boundarySpring;
-              }
-
-              x = clamp(x, minX - 8, maxX + 8);
-              y = clamp(y, minY - 8, maxY + 8);
-              setCards((prev) =>
-                prev.map((card) =>
-                  card.id === releaseId ? { ...card, pos: { x: clamp(x, minX, maxX), y: clamp(y, minY, maxY) } } : card
-                )
-              );
-
-              if (Math.hypot(vx, vy) < (motionMode === "calm" ? 0.015 : 0.02)) {
-                drag.current.rafId = 0;
-                return;
-              }
-              drag.current.rafId = requestAnimationFrame(animate);
-            };
-
-            if (drag.current.rafId) cancelAnimationFrame(drag.current.rafId);
-            drag.current.rafId = requestAnimationFrame(animate);
           };
 
           window.addEventListener("pointermove", onMove);
@@ -907,7 +820,7 @@
               onPointerDown: startDrag(card.id),
               onDuplicate: () => addCopy(card.id),
               entranceReady,
-              entranceDelay: motionMode === "calm" ? 0.15 : 0.22,
+              entranceDelay: (motionMode === "calm" ? 0.15 : 0.22) + index * 0.04,
               motionMode
             })
           )
@@ -919,7 +832,7 @@
         const [frame, setFrame] = useState(0);
         const [ghosts, setGhosts] = useState([]);
         const prefersReducedMotion = useReducedMotion();
-        const drag = useDraggablePosition("about_loading_braille_panel_position_v1", getDefaultBraillePanelPos, motionMode);
+        const drag = useDraggablePosition(getDefaultBraillePanelPos);
 
         useEffect(() => {
           if (prefersReducedMotion) {
@@ -980,7 +893,7 @@
       }
 
       function CuratedTitle({ motionMode, entranceReady }) {
-        const drag = useDraggablePosition("about_curated_title_position_v1", getDefaultTitlePos, motionMode);
+        const drag = useDraggablePosition(getDefaultTitlePos);
         return React.createElement(
           motion.div,
           {
@@ -1002,14 +915,32 @@
       }
 
       function ToastPanel({ motionMode, entranceReady }) {
-        const drag = useDraggablePosition("about_toast_panel_position_v2", getDefaultToastPos, motionMode);
+        const drag = useDraggablePosition(getDefaultToastPos);
         const [mode, setMode] = useState("slide");
         const [toasts, setToasts] = useState([]);
+        const [isIdleBreathing, setIsIdleBreathing] = useState(false);
         const idRef = useRef(0);
         const timersRef = useRef(new Map());
+        const idleBreathTimerRef = useRef(0);
         const prefersReducedMotion = useReducedMotion();
         const toastDurationMs = prefersReducedMotion ? 2200 : 3200;
         const utilityEase = [0.22, 1, 0.36, 1];
+
+        const clearIdleBreathTimer = () => {
+          if (!idleBreathTimerRef.current) return;
+          clearTimeout(idleBreathTimerRef.current);
+          idleBreathTimerRef.current = 0;
+        };
+
+        const scheduleIdleBreath = () => {
+          clearIdleBreathTimer();
+          setIsIdleBreathing(false);
+          if (prefersReducedMotion) return;
+          idleBreathTimerRef.current = window.setTimeout(() => {
+            setIsIdleBreathing(true);
+            idleBreathTimerRef.current = 0;
+          }, 1800);
+        };
 
         const clearToastTimer = (id) => {
           const timer = timersRef.current.get(id);
@@ -1020,7 +951,14 @@
 
         const removeToast = (id) => {
           clearToastTimer(id);
-          setToasts((prev) => prev.filter((toast) => toast.id !== id));
+          setToasts((prev) => {
+            const next = prev.filter((toast) => toast.id !== id);
+            if (next.length <= 1) {
+              clearIdleBreathTimer();
+              setIsIdleBreathing(false);
+            }
+            return next;
+          });
         };
 
         const addToast = () => {
@@ -1037,18 +975,29 @@
           });
           const timer = window.setTimeout(() => removeToast(id), toastDurationMs);
           timersRef.current.set(id, timer);
+          scheduleIdleBreath();
         };
 
         const resetToasts = () => {
           timersRef.current.forEach((timer) => clearTimeout(timer));
           timersRef.current.clear();
+          clearIdleBreathTimer();
+          setIsIdleBreathing(false);
           setToasts([]);
         };
+
+        useEffect(() => {
+          if (toasts.length <= 1) {
+            clearIdleBreathTimer();
+            setIsIdleBreathing(false);
+          }
+        }, [toasts.length]);
 
         useEffect(() => {
           return () => {
             timersRef.current.forEach((timer) => clearTimeout(timer));
             timersRef.current.clear();
+            clearIdleBreathTimer();
           };
         }, []);
 
@@ -1097,6 +1046,30 @@
           event.stopPropagation();
         };
 
+        const magneticEnabled =
+          !prefersReducedMotion &&
+          typeof window !== "undefined" &&
+          typeof window.matchMedia === "function" &&
+          window.matchMedia("(pointer:fine)").matches;
+
+        const handleMagneticMove = (event) => {
+          if (!magneticEnabled) return;
+          const rect = event.currentTarget.getBoundingClientRect();
+          const centerX = rect.left + rect.width * 0.5;
+          const centerY = rect.top + rect.height * 0.5;
+          const strength = 0.1;
+          const maxPull = 3.5;
+          const mx = clamp((event.clientX - centerX) * strength, -maxPull, maxPull);
+          const my = clamp((event.clientY - centerY) * strength, -maxPull, maxPull);
+          event.currentTarget.style.setProperty("--mx", `${mx}px`);
+          event.currentTarget.style.setProperty("--my", `${my}px`);
+        };
+
+        const handleMagneticLeave = (event) => {
+          event.currentTarget.style.setProperty("--mx", "0px");
+          event.currentTarget.style.setProperty("--my", "0px");
+        };
+
         return React.createElement(
           motion.section,
           {
@@ -1118,7 +1091,11 @@
             { className: "toast-stage" },
             React.createElement(
               "div",
-              { className: "toast-layer", "aria-live": "polite", "aria-atomic": "true" },
+              {
+                className: `toast-layer${isIdleBreathing && toasts.length > 1 ? " idle-breathe" : ""}`,
+                "aria-live": "polite",
+                "aria-atomic": "true"
+              },
               React.createElement(
                 AnimatePresence,
                 { initial: false },
