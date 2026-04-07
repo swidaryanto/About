@@ -127,6 +127,17 @@
         touch-action: none;
       }
 
+      .dot-pulse-floating {
+        position: fixed;
+        pointer-events: auto;
+        cursor: grab;
+        touch-action: none;
+      }
+
+      .dot-pulse-floating.dragging {
+        cursor: grabbing;
+      }
+
       .braille-panel.dragging {
         cursor: grabbing;
       }
@@ -177,6 +188,41 @@
       .loading-braille-ghost-3 {
         opacity: 0.14;
         transform: translateX(-0.045em);
+      }
+
+      .dot-pulse-panel {
+        width: 180px;
+        height: 48px;
+        border-radius: 14px;
+        border: 1px solid var(--panel-line);
+        background: color-mix(in srgb, var(--panel-bg) 82%, white 18%);
+        box-shadow: 0 2px 7px rgba(0, 0, 0, 0.07);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .dot-pulse {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .dot-pulse-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--braille-spinner);
+        opacity: 0.32;
+        animation: dotPulse 880ms var(--ease-utility) infinite;
+      }
+
+      .dot-pulse-dot:nth-child(2) {
+        animation-delay: 120ms;
+      }
+
+      .dot-pulse-dot:nth-child(3) {
+        animation-delay: 240ms;
       }
 
       body[data-motion="calm"] .loading-braille-ghost-1 {
@@ -474,6 +520,19 @@
         }
       }
 
+      @keyframes dotPulse {
+        0%,
+        100% {
+          transform: translateY(0) scale(0.9);
+          opacity: 0.28;
+        }
+
+        50% {
+          transform: translateY(-1px) scale(1.1);
+          opacity: 1;
+        }
+      }
+
       @media (prefers-reduced-motion: reduce) {
         .curated-title {
           animation: none;
@@ -481,6 +540,11 @@
 
         .loading-braille {
           animation: none;
+        }
+
+        .dot-pulse-dot {
+          animation: none;
+          opacity: 0.56;
         }
 
         .toast-layer.idle-breathe {
@@ -547,6 +611,11 @@
         .loading-braille {
           font-size: 18px;
         }
+
+        .dot-pulse-panel {
+          width: 180px;
+          height: 44px;
+        }
       }
     </style>
   </head>
@@ -587,6 +656,14 @@
         return {
           x: loading.x,
           y: clamp(loading.y + 112, 24, window.innerHeight - 104)
+        };
+      }
+
+      function getDefaultDotPulsePos() {
+        const braille = getDefaultBraillePanelPos();
+        return {
+          x: braille.x,
+          y: clamp(braille.y + 92, 0, window.innerHeight - 48)
         };
       }
 
@@ -833,6 +910,7 @@
         const [ghosts, setGhosts] = useState([]);
         const prefersReducedMotion = useReducedMotion();
         const drag = useDraggablePosition(getDefaultBraillePanelPos);
+        const dotDrag = useDraggablePosition(getDefaultDotPulsePos);
 
         useEffect(() => {
           if (prefersReducedMotion) {
@@ -851,42 +929,74 @@
         const frameValue = frames[prefersReducedMotion ? 0 : frame];
 
         return React.createElement(
-          motion.div,
-          {
-            ref: drag.ref,
-            className: `braille-panel${drag.dragging ? " dragging" : ""}`,
-            style: { left: `${drag.pos.x}px`, top: `${drag.pos.y}px` },
-            onPointerDown: drag.onPointerDown,
-            initial: { opacity: 0, y: -8, scale: 0.98 },
-            animate: { opacity: entranceReady ? 1 : 0, y: entranceReady ? 0 : -8, scale: entranceReady ? 1 : 0.98 },
-            transition: {
-              duration: motionMode === "calm" ? 0.34 : 0.42,
-              delay: motionMode === "calm" ? 0.04 : 0.06,
-              ease: [0.22, 1, 0.36, 1]
+          React.Fragment,
+          null,
+          React.createElement(
+            motion.div,
+            {
+              ref: drag.ref,
+              className: `braille-panel${drag.dragging ? " dragging" : ""}`,
+              style: { left: `${drag.pos.x}px`, top: `${drag.pos.y}px` },
+              onPointerDown: drag.onPointerDown,
+              initial: { opacity: 0, y: -8, scale: 0.98 },
+              animate: { opacity: entranceReady ? 1 : 0, y: entranceReady ? 0 : -8, scale: entranceReady ? 1 : 0.98 },
+              transition: {
+                duration: motionMode === "calm" ? 0.34 : 0.42,
+                delay: motionMode === "calm" ? 0.04 : 0.06,
+                ease: [0.22, 1, 0.36, 1]
+              },
+              "aria-label": "Loading status"
             },
-            "aria-label": "Loading status"
-          },
-          React.createElement(
-            "span",
-            { className: "braille-slot" },
-            React.createElement("span", { className: "loading-braille", "aria-hidden": "true" }, frameValue)
-          ),
-          React.createElement(
-            "span",
-            { className: "braille-slot" },
             React.createElement(
               "span",
-              { className: "loading-braille loading-braille-trail", "aria-hidden": "true" },
-              ghosts[2] !== undefined
-                ? React.createElement("span", { className: "loading-braille-layer loading-braille-ghost-3" }, frames[ghosts[2]])
-                : null,
-              ghosts[1] !== undefined
-                ? React.createElement("span", { className: "loading-braille-layer loading-braille-ghost-2" }, frames[ghosts[1]])
-                : null,
-              ghosts[0] !== undefined
-                ? React.createElement("span", { className: "loading-braille-layer loading-braille-ghost-1" }, frames[ghosts[0]])
-                : null,
-              React.createElement("span", { className: "loading-braille-layer" }, frameValue)
+              { className: "braille-slot" },
+              React.createElement("span", { className: "loading-braille", "aria-hidden": "true" }, frameValue)
+            ),
+            React.createElement(
+              "span",
+              { className: "braille-slot" },
+              React.createElement(
+                "span",
+                { className: "loading-braille loading-braille-trail", "aria-hidden": "true" },
+                ghosts[2] !== undefined
+                  ? React.createElement("span", { className: "loading-braille-layer loading-braille-ghost-3" }, frames[ghosts[2]])
+                  : null,
+                ghosts[1] !== undefined
+                  ? React.createElement("span", { className: "loading-braille-layer loading-braille-ghost-2" }, frames[ghosts[1]])
+                  : null,
+                ghosts[0] !== undefined
+                  ? React.createElement("span", { className: "loading-braille-layer loading-braille-ghost-1" }, frames[ghosts[0]])
+                  : null,
+                React.createElement("span", { className: "loading-braille-layer" }, frameValue)
+              )
+            )
+          ),
+          React.createElement(
+            motion.div,
+            {
+              ref: dotDrag.ref,
+              className: `dot-pulse-floating${dotDrag.dragging ? " dragging" : ""}`,
+              style: { left: `${dotDrag.pos.x}px`, top: `${dotDrag.pos.y}px` },
+              onPointerDown: dotDrag.onPointerDown,
+              initial: { opacity: 0, y: -6, scale: 0.98 },
+              animate: { opacity: entranceReady ? 1 : 0, y: entranceReady ? 0 : -6, scale: entranceReady ? 1 : 0.98 },
+              transition: {
+                duration: motionMode === "calm" ? 0.34 : 0.42,
+                delay: motionMode === "calm" ? 0.06 : 0.08,
+                ease: [0.22, 1, 0.36, 1]
+              },
+              "aria-hidden": "true"
+            },
+            React.createElement(
+              "div",
+              { className: "dot-pulse-panel" },
+              React.createElement(
+                "div",
+                { className: "dot-pulse" },
+                React.createElement("span", { className: "dot-pulse-dot" }),
+                React.createElement("span", { className: "dot-pulse-dot" }),
+                React.createElement("span", { className: "dot-pulse-dot" })
+              )
             )
           )
         );
