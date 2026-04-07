@@ -192,7 +192,7 @@
 
       .dot-pulse-panel {
         width: 180px;
-        height: 48px;
+        height: 80px;
         border-radius: 14px;
         border: 1px solid var(--panel-line);
         background: color-mix(in srgb, var(--panel-bg) 82%, white 18%);
@@ -205,12 +205,12 @@
       .dot-pulse {
         display: inline-flex;
         align-items: center;
-        gap: 8px;
+        gap: 6px;
       }
 
       .dot-pulse-dot {
-        width: 7px;
-        height: 7px;
+        width: 5px;
+        height: 5px;
         border-radius: 50%;
         background: var(--braille-spinner);
         opacity: 0.32;
@@ -647,7 +647,7 @@
 
         .dot-pulse-panel {
           width: 180px;
-          height: 44px;
+          height: 80px;
         }
 
         .top-progress {
@@ -693,16 +693,16 @@
           };
         }
         return {
-          x: loading.x,
-          y: clamp(loading.y + 112, 24, window.innerHeight - 104)
+          x: clamp(loading.x + 206, 24, window.innerWidth - 204),
+          y: loading.y
         };
       }
 
       function getDefaultDotPulsePos() {
-        const braille = getDefaultBraillePanelPos();
+        const loading = getDefaultLoadingPos();
         return {
-          x: braille.x,
-          y: clamp(braille.y + 92, 0, window.innerHeight - 48)
+          x: loading.x,
+          y: clamp(loading.y + 112, 0, window.innerHeight - 84)
         };
       }
 
