@@ -546,9 +546,12 @@
         top: 0;
         bottom: 0;
         left: var(--reveal, 50%);
-        width: 0;
+        width: 24px;
+        transform: translateX(-50%);
         border-left: 1px solid rgba(21, 21, 21, 0.55);
-        pointer-events: none;
+        pointer-events: auto;
+        touch-action: none;
+        cursor: ew-resize;
       }
 
       .diff-handle::after {
@@ -568,14 +571,16 @@
       .diff-controls {
         display: flex;
         align-items: center;
-        justify-content: space-between;
-        gap: 12px;
+        justify-content: center;
+        gap: 8px;
         padding: 8px 12px;
       }
 
-      .diff-range {
-        width: 100%;
-        accent-color: #383838;
+      .diff-instruction {
+        margin: 0;
+        color: #5a5a5a;
+        font-size: 12px;
+        line-height: 1.3;
       }
 
       select.toast-control {
@@ -1471,27 +1476,43 @@
 
       function DecisionDiffPanel({ motionMode, entranceReady }) {
         const drag = useDraggablePosition(getDefaultDiffPos);
+        const stageRef = useRef(null);
         const [reveal, setReveal] = useState(50);
-        const [autoPlay, setAutoPlay] = useState(true);
-        const prefersReducedMotion = useReducedMotion();
-
-        useEffect(() => {
-          if (!autoPlay || prefersReducedMotion) return;
-          let frameId = 0;
-          const start = performance.now();
-          const tick = (now) => {
-            const elapsed = now - start;
-            const phase = (elapsed % 3200) / 3200;
-            const wave = 0.5 + 0.5 * Math.sin(phase * Math.PI * 2);
-            setReveal(Math.round(12 + wave * 76));
-            frameId = requestAnimationFrame(tick);
-          };
-          frameId = requestAnimationFrame(tick);
-          return () => cancelAnimationFrame(frameId);
-        }, [autoPlay, prefersReducedMotion]);
+        const scrubRef = useRef({ active: false });
 
         const stopDragOnControl = (event) => {
           event.stopPropagation();
+        };
+
+        useEffect(() => {
+          const onPointerMove = (event) => {
+            if (!scrubRef.current.active || !stageRef.current) return;
+            const rect = stageRef.current.getBoundingClientRect();
+            const ratio = (event.clientX - rect.left) / rect.width;
+            setReveal(Math.round(clamp(ratio * 100, 0, 100)));
+          };
+
+          const onPointerUp = () => {
+            scrubRef.current.active = false;
+          };
+
+          window.addEventListener("pointermove", onPointerMove);
+          window.addEventListener("pointerup", onPointerUp);
+          window.addEventListener("pointercancel", onPointerUp);
+          return () => {
+            window.removeEventListener("pointermove", onPointerMove);
+            window.removeEventListener("pointerup", onPointerUp);
+            window.removeEventListener("pointercancel", onPointerUp);
+          };
+        }, []);
+
+        const startHandleDrag = (event) => {
+          stopDragOnControl(event);
+          scrubRef.current.active = true;
+          if (!stageRef.current) return;
+          const rect = stageRef.current.getBoundingClientRect();
+          const ratio = (event.clientX - rect.left) / rect.width;
+          setReveal(Math.round(clamp(ratio * 100, 0, 100)));
         };
 
         return React.createElement(
@@ -1512,7 +1533,7 @@
           },
           React.createElement(
             "div",
-            { className: "diff-stage", style: { "--reveal": `${reveal}%` } },
+            { ref: stageRef, className: "diff-stage", style: { "--reveal": `${reveal}%` } },
             React.createElement(
               "div",
               { className: "diff-view diff-before", "aria-hidden": "true" },
@@ -1535,36 +1556,21 @@
                 React.createElement("p", { className: "diff-copy" }, "Primary action is clearer, with reduced noise and better scan rhythm.")
               )
             ),
-            React.createElement("span", { className: "diff-handle", "aria-hidden": "true" })
+            React.createElement("span", {
+              className: "diff-handle",
+              "aria-label": "Drag to compare before and after",
+              role: "slider",
+              "aria-valuemin": 0,
+              "aria-valuemax": 100,
+              "aria-valuenow": reveal,
+              tabIndex: 0,
+              onPointerDown: startHandleDrag
+            })
           ),
           React.createElement(
             "div",
             { className: "diff-controls" },
-            React.createElement(
-              "button",
-              {
-                className: "toast-control",
-                type: "button",
-                "data-no-drag": "true",
-                onPointerDown: stopDragOnControl,
-                onClick: () => setAutoPlay((prev) => !prev)
-              },
-              autoPlay ? "Pause wipe" : "Auto wipe"
-            ),
-            React.createElement("input", {
-              className: "diff-range",
-              type: "range",
-              min: "0",
-              max: "100",
-              value: reveal,
-              "aria-label": "Reveal after state",
-              "data-no-drag": "true",
-              onPointerDown: stopDragOnControl,
-              onChange: (event) => {
-                setAutoPlay(false);
-                setReveal(Number(event.target.value));
-              }
-            })
+            React.createElement("p", { className: "diff-instruction" }, "Drag the black handle left or right to compare")
           )
         );
       }
