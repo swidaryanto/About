@@ -462,6 +462,122 @@
         pointer-events: none;
       }
 
+      .diff-panel {
+        position: fixed;
+        width: min(420px, calc(100vw - 44px));
+        border-radius: 14px;
+        border: 1px solid var(--panel-line);
+        background: rgba(255, 255, 255, 0.94);
+        backdrop-filter: blur(8px) saturate(120%);
+        box-shadow:
+          0 1px 2px rgba(0, 0, 0, 0.06),
+          0 10px 30px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+        cursor: grab;
+        user-select: none;
+        touch-action: none;
+      }
+
+      .diff-panel.dragging {
+        cursor: grabbing;
+      }
+
+      .diff-stage {
+        position: relative;
+        height: 170px;
+        border-bottom: 1px solid var(--panel-line);
+        overflow: hidden;
+      }
+
+      .diff-view {
+        position: absolute;
+        inset: 0;
+        padding: 16px;
+      }
+
+      .diff-before {
+        background: linear-gradient(145deg, #f1f1f1 0%, #e6e6e6 100%);
+      }
+
+      .diff-after {
+        background: linear-gradient(145deg, #dfebe2 0%, #d1e4d6 100%);
+      }
+
+      .diff-card {
+        height: 100%;
+        border-radius: 12px;
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        background: rgba(255, 255, 255, 0.9);
+        display: grid;
+        align-content: center;
+        gap: 6px;
+        padding: 14px;
+      }
+
+      .diff-badge {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: #666;
+      }
+
+      .diff-headline {
+        margin: 0;
+        color: #1f1f1f;
+        font-size: 16px;
+        font-weight: 600;
+        line-height: 1.25;
+      }
+
+      .diff-copy {
+        margin: 0;
+        color: #494949;
+        font-size: 13px;
+        line-height: 1.4;
+      }
+
+      .diff-after-clip {
+        clip-path: inset(0 calc(100% - var(--reveal, 50%)) 0 0);
+      }
+
+      .diff-handle {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: var(--reveal, 50%);
+        width: 0;
+        border-left: 1px solid rgba(21, 21, 21, 0.55);
+        pointer-events: none;
+      }
+
+      .diff-handle::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 0;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: #2f2f2f;
+        border: 2px solid rgba(255, 255, 255, 0.92);
+        transform: translate(-50%, -50%);
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.22);
+      }
+
+      .diff-controls {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 8px 12px;
+      }
+
+      .diff-range {
+        width: 100%;
+        accent-color: #383838;
+      }
+
       select.toast-control {
         appearance: none;
         padding-right: 24px;
@@ -655,6 +771,7 @@
           left: 0;
           width: 100vw;
         }
+
       }
     </style>
   </head>
@@ -1342,6 +1459,116 @@
         );
       }
 
+      function getDefaultDiffPos() {
+        const toast = getDefaultToastPos();
+        const width = Math.min(420, Math.max(240, window.innerWidth - 44));
+        const y = window.innerWidth <= 760 ? toast.y + 270 : toast.y + 286;
+        return {
+          x: clamp(toast.x, 8, window.innerWidth - width - 8),
+          y: clamp(y, 24, window.innerHeight - 262)
+        };
+      }
+
+      function DecisionDiffPanel({ motionMode, entranceReady }) {
+        const drag = useDraggablePosition(getDefaultDiffPos);
+        const [reveal, setReveal] = useState(50);
+        const [autoPlay, setAutoPlay] = useState(true);
+        const prefersReducedMotion = useReducedMotion();
+
+        useEffect(() => {
+          if (!autoPlay || prefersReducedMotion) return;
+          let frameId = 0;
+          const start = performance.now();
+          const tick = (now) => {
+            const elapsed = now - start;
+            const phase = (elapsed % 3200) / 3200;
+            const wave = 0.5 + 0.5 * Math.sin(phase * Math.PI * 2);
+            setReveal(Math.round(12 + wave * 76));
+            frameId = requestAnimationFrame(tick);
+          };
+          frameId = requestAnimationFrame(tick);
+          return () => cancelAnimationFrame(frameId);
+        }, [autoPlay, prefersReducedMotion]);
+
+        const stopDragOnControl = (event) => {
+          event.stopPropagation();
+        };
+
+        return React.createElement(
+          motion.section,
+          {
+            ref: drag.ref,
+            className: `diff-panel${drag.dragging ? " dragging" : ""}`,
+            style: { left: `${drag.pos.x}px`, top: `${drag.pos.y}px` },
+            onPointerDown: drag.onPointerDown,
+            initial: { opacity: 0, y: 12, scale: 0.99 },
+            animate: { opacity: entranceReady ? 1 : 0, y: entranceReady ? 0 : 12, scale: entranceReady ? 1 : 0.99 },
+            transition: {
+              duration: motionMode === "calm" ? 0.36 : 0.48,
+              delay: motionMode === "calm" ? 0.24 : 0.34,
+              ease: [0.22, 1, 0.36, 1]
+            },
+            "aria-label": "Decision diff transition"
+          },
+          React.createElement(
+            "div",
+            { className: "diff-stage", style: { "--reveal": `${reveal}%` } },
+            React.createElement(
+              "div",
+              { className: "diff-view diff-before", "aria-hidden": "true" },
+              React.createElement(
+                "article",
+                { className: "diff-card" },
+                React.createElement("span", { className: "diff-badge" }, "Before"),
+                React.createElement("p", { className: "diff-headline" }, "Dense card hierarchy"),
+                React.createElement("p", { className: "diff-copy" }, "Competing priorities and unclear action path in the first view.")
+              )
+            ),
+            React.createElement(
+              "div",
+              { className: "diff-view diff-after diff-after-clip", "aria-hidden": "true" },
+              React.createElement(
+                "article",
+                { className: "diff-card" },
+                React.createElement("span", { className: "diff-badge" }, "After"),
+                React.createElement("p", { className: "diff-headline" }, "Focused decision layout"),
+                React.createElement("p", { className: "diff-copy" }, "Primary action is clearer, with reduced noise and better scan rhythm.")
+              )
+            ),
+            React.createElement("span", { className: "diff-handle", "aria-hidden": "true" })
+          ),
+          React.createElement(
+            "div",
+            { className: "diff-controls" },
+            React.createElement(
+              "button",
+              {
+                className: "toast-control",
+                type: "button",
+                "data-no-drag": "true",
+                onPointerDown: stopDragOnControl,
+                onClick: () => setAutoPlay((prev) => !prev)
+              },
+              autoPlay ? "Pause wipe" : "Auto wipe"
+            ),
+            React.createElement("input", {
+              className: "diff-range",
+              type: "range",
+              min: "0",
+              max: "100",
+              value: reveal,
+              "aria-label": "Reveal after state",
+              "data-no-drag": "true",
+              onPointerDown: stopDragOnControl,
+              onChange: (event) => {
+                setAutoPlay(false);
+                setReveal(Number(event.target.value));
+              }
+            })
+          )
+        );
+      }
+
       function App() {
         const motionMode = "normal";
         const [entranceReady, setEntranceReady] = useState(false);
@@ -1358,7 +1585,8 @@
           React.createElement(TopCornerProgress, { motionMode, entranceReady }),
           React.createElement(CuratedTitle, { motionMode, entranceReady }),
           React.createElement(LoadingStack, { motionMode, entranceReady }),
-          React.createElement(ToastPanel, { motionMode, entranceReady })
+          React.createElement(ToastPanel, { motionMode, entranceReady }),
+          React.createElement(DecisionDiffPanel, { motionMode, entranceReady })
         );
       }
 
