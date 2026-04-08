@@ -464,7 +464,7 @@
 
       .diff-panel {
         position: fixed;
-        width: min(420px, calc(100vw - 44px));
+        width: min(320px, calc(100vw - 44px));
         border-radius: 14px;
         border: 1px solid var(--panel-line);
         background: rgba(255, 255, 255, 0.94);
@@ -503,38 +503,21 @@
         background: linear-gradient(145deg, #dfebe2 0%, #d1e4d6 100%);
       }
 
-      .diff-card {
+      .diff-image-frame {
         height: 100%;
         border-radius: 12px;
         border: 1px solid rgba(0, 0, 0, 0.08);
         background: rgba(255, 255, 255, 0.9);
-        display: grid;
-        align-content: center;
-        gap: 6px;
-        padding: 14px;
+        padding: 8px;
+        overflow: hidden;
       }
 
-      .diff-badge {
-        font-size: 11px;
-        font-weight: 700;
-        letter-spacing: 0.04em;
-        text-transform: uppercase;
-        color: #666;
-      }
-
-      .diff-headline {
-        margin: 0;
-        color: #1f1f1f;
-        font-size: 16px;
-        font-weight: 600;
-        line-height: 1.25;
-      }
-
-      .diff-copy {
-        margin: 0;
-        color: #494949;
-        font-size: 13px;
-        line-height: 1.4;
+      .diff-image {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 10px;
       }
 
       .diff-after-clip {
@@ -1466,7 +1449,7 @@
 
       function getDefaultDiffPos() {
         const toast = getDefaultToastPos();
-        const width = Math.min(420, Math.max(240, window.innerWidth - 44));
+        const width = Math.min(320, Math.max(220, window.innerWidth - 44));
         const y = window.innerWidth <= 760 ? toast.y + 270 : toast.y + 286;
         return {
           x: clamp(toast.x, 8, window.innerWidth - width - 8),
@@ -1479,6 +1462,52 @@
         const stageRef = useRef(null);
         const [reveal, setReveal] = useState(50);
         const scrubRef = useRef({ active: false });
+        const beforeImageSrc = useMemo(
+          () =>
+            `data:image/svg+xml;utf8,${encodeURIComponent(
+              `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 300">
+                <defs>
+                  <linearGradient id="bgBefore" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stop-color="#f4f4f4"/>
+                    <stop offset="100%" stop-color="#e7e7e7"/>
+                  </linearGradient>
+                </defs>
+                <rect width="760" height="300" fill="url(#bgBefore)"/>
+                <rect x="26" y="26" width="708" height="248" rx="16" fill="#ffffff" stroke="#dddddd"/>
+                <rect x="54" y="56" width="180" height="16" rx="8" fill="#b4b4b4"/>
+                <rect x="54" y="84" width="642" height="11" rx="5.5" fill="#d6d6d6"/>
+                <rect x="54" y="103" width="430" height="11" rx="5.5" fill="#d9d9d9"/>
+                <rect x="54" y="130" width="210" height="120" rx="10" fill="#f1f1f1" stroke="#d8d8d8"/>
+                <rect x="280" y="130" width="210" height="120" rx="10" fill="#f1f1f1" stroke="#d8d8d8"/>
+                <rect x="506" y="130" width="190" height="74" rx="10" fill="#ececec" stroke="#d8d8d8"/>
+                <rect x="506" y="216" width="190" height="34" rx="10" fill="#dddddd"/>
+              </svg>`
+            )}`,
+          []
+        );
+        const afterImageSrc = useMemo(
+          () =>
+            `data:image/svg+xml;utf8,${encodeURIComponent(
+              `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 300">
+                <defs>
+                  <linearGradient id="bgAfter" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stop-color="#edf6ef"/>
+                    <stop offset="100%" stop-color="#d7e9dc"/>
+                  </linearGradient>
+                </defs>
+                <rect width="760" height="300" fill="url(#bgAfter)"/>
+                <rect x="26" y="26" width="708" height="248" rx="16" fill="#ffffff" stroke="#cfe0d4"/>
+                <rect x="54" y="56" width="230" height="16" rx="8" fill="#7ca58a"/>
+                <rect x="54" y="84" width="642" height="11" rx="5.5" fill="#d2e3d7"/>
+                <rect x="54" y="103" width="420" height="11" rx="5.5" fill="#dae9de"/>
+                <rect x="54" y="130" width="350" height="120" rx="10" fill="#eff7f1" stroke="#cfe1d4"/>
+                <rect x="420" y="130" width="276" height="74" rx="10" fill="#e7f2ea" stroke="#c6dbcf"/>
+                <rect x="420" y="216" width="190" height="34" rx="10" fill="#6c9178"/>
+                <rect x="622" y="216" width="74" height="34" rx="10" fill="#d3e5d9"/>
+              </svg>`
+            )}`,
+          []
+        );
 
         const stopDragOnControl = (event) => {
           event.stopPropagation();
@@ -1539,10 +1568,12 @@
               { className: "diff-view diff-before", "aria-hidden": "true" },
               React.createElement(
                 "article",
-                { className: "diff-card" },
-                React.createElement("span", { className: "diff-badge" }, "Before"),
-                React.createElement("p", { className: "diff-headline" }, "Dense card hierarchy"),
-                React.createElement("p", { className: "diff-copy" }, "Competing priorities and unclear action path in the first view.")
+                { className: "diff-image-frame" },
+                React.createElement("img", {
+                  className: "diff-image",
+                  src: beforeImageSrc,
+                  alt: "Before layout snapshot"
+                })
               )
             ),
             React.createElement(
@@ -1550,10 +1581,12 @@
               { className: "diff-view diff-after diff-after-clip", "aria-hidden": "true" },
               React.createElement(
                 "article",
-                { className: "diff-card" },
-                React.createElement("span", { className: "diff-badge" }, "After"),
-                React.createElement("p", { className: "diff-headline" }, "Focused decision layout"),
-                React.createElement("p", { className: "diff-copy" }, "Primary action is clearer, with reduced noise and better scan rhythm.")
+                { className: "diff-image-frame" },
+                React.createElement("img", {
+                  className: "diff-image",
+                  src: afterImageSrc,
+                  alt: "After layout snapshot"
+                })
               )
             ),
             React.createElement("span", {
