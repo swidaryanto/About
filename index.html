@@ -591,78 +591,159 @@
         z-index: 6;
       }
 
-      .motion-list-panel {
+      .motion-info {
         position: fixed;
         right: 20px;
         top: 20px;
-        width: min(350px, calc(100vw - 40px));
-        border-radius: 14px;
+        z-index: 7;
+      }
+
+      .motion-info-trigger {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
         border: 1px solid var(--panel-line);
-        background: rgba(255, 255, 255, 0.9);
+        background: rgba(255, 255, 255, 0.94);
+        backdrop-filter: blur(8px) saturate(120%);
+        box-shadow:
+          0 1px 2px rgba(0, 0, 0, 0.06),
+          0 8px 20px rgba(0, 0, 0, 0.08);
+        color: #222;
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .motion-info-popover {
+        position: absolute;
+        top: 42px;
+        right: 0;
+        width: min(320px, calc(100vw - 40px));
+        border-radius: 12px;
+        border: 1px solid var(--panel-line);
+        background: rgba(255, 255, 255, 0.95);
         backdrop-filter: blur(8px) saturate(120%);
         box-shadow:
           0 1px 2px rgba(0, 0, 0, 0.06),
           0 10px 30px rgba(0, 0, 0, 0.08);
-        padding: 14px;
-        z-index: 6;
+        padding: 10px 12px;
       }
 
-      .motion-list-title {
+      .motion-info-title {
         margin: 0;
         color: #171717;
-        font-size: 15px;
+        font-size: 13px;
         font-weight: 650;
         letter-spacing: -0.01em;
       }
 
-      .motion-list-subtitle {
-        margin: 5px 0 0;
-        color: #5d5d5d;
-        font-size: 12px;
+      .motion-info-meta {
+        margin: 6px 0 0;
+        color: #535353;
+        font-size: 11px;
+        line-height: 1.4;
+        font-family: "IBM Plex Mono", "SF Mono", "JetBrains Mono", monospace;
+      }
+
+      .motion-info-note {
+        margin: 6px 0 0;
+        color: #505050;
+        font-size: 11px;
         line-height: 1.35;
       }
 
-      .motion-list {
-        list-style: none;
-        margin: 12px 0 0;
-        padding: 0;
-        display: grid;
-        gap: 8px;
+      .motion-example-panel {
+        position: fixed;
+        left: 20px;
+        bottom: 20px;
+        width: min(380px, calc(100vw - 40px));
+        border-radius: 14px;
+        border: 1px solid var(--panel-line);
+        background: rgba(255, 255, 255, 0.92);
+        backdrop-filter: blur(8px) saturate(120%);
+        box-shadow:
+          0 1px 2px rgba(0, 0, 0, 0.06),
+          0 10px 30px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+        z-index: 6;
       }
 
-      .motion-list-item {
-        border-radius: 10px;
-        border: 1px solid #dedede;
-        background: #f8f8f8;
-        padding: 9px 10px;
-      }
-
-      .motion-list-item-head {
+      .motion-example-head {
         display: flex;
-        align-items: baseline;
+        align-items: center;
         justify-content: space-between;
-        gap: 10px;
+        gap: 8px;
+        padding: 10px 12px 8px;
+        border-bottom: 1px solid #e3e3e3;
       }
 
-      .motion-list-item-name {
+      .motion-example-title {
+        margin: 0;
         color: #1f1f1f;
-        font-size: 12px;
+        font-size: 13px;
         font-weight: 650;
         letter-spacing: -0.005em;
       }
 
-      .motion-list-item-meta {
+      .motion-example-counter {
         color: #6a6a6a;
         font-size: 11px;
-        line-height: 1.2;
         font-family: "IBM Plex Mono", "SF Mono", "JetBrains Mono", monospace;
       }
 
-      .motion-list-item-note {
-        margin: 5px 0 0;
-        color: #4f4f4f;
-        font-size: 11px;
-        line-height: 1.35;
+      .motion-example-stage {
+        min-height: 130px;
+        display: grid;
+        place-items: center;
+        padding: 16px 12px;
+        background: linear-gradient(160deg, #f7f7f7 0%, #efefef 100%);
+      }
+
+      .motion-example-block {
+        width: 120px;
+        height: 36px;
+        border-radius: 10px;
+        border: 1px solid #d7d7d7;
+        background: #ffffff;
+        display: grid;
+        place-items: center;
+        font-size: 12px;
+        color: #333;
+        font-weight: 600;
+      }
+
+      .motion-example-list {
+        width: min(240px, 100%);
+        display: grid;
+        gap: 6px;
+      }
+
+      .motion-example-row {
+        border: 1px solid #d7d7d7;
+        border-radius: 8px;
+        background: #ffffff;
+        color: #333;
+        font-size: 12px;
+        padding: 8px 10px;
+      }
+
+      .motion-example-toast {
+        width: min(240px, 100%);
+        border-radius: 10px;
+        border: 1px solid #d7d7d7;
+        background: #ffffff;
+        color: #333;
+        font-size: 12px;
+        padding: 10px 12px;
+      }
+
+      .motion-example-controls {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 8px 10px;
+        border-top: 1px solid #e3e3e3;
       }
 
       .modal-demo-button:hover {
@@ -926,10 +1007,19 @@
           bottom: 8px;
         }
 
-        .motion-list-panel {
+        .motion-info {
           right: 8px;
           top: 8px;
-          width: min(350px, calc(100vw - 16px));
+        }
+
+        .motion-info-popover {
+          width: min(300px, calc(100vw - 16px));
+        }
+
+        .motion-example-panel {
+          left: 8px;
+          bottom: 56px;
+          width: min(360px, calc(100vw - 16px));
         }
 
       }
@@ -1961,55 +2051,214 @@
         }
       ];
 
-      function MotionListPanel({ entranceReady, motionMode }) {
-        const listItemTransition = {
-          duration: motionMode === "calm" ? 0.2 : 0.24,
-          ease: [0.22, 1, 0.36, 1]
+      function MotionExamples({ entranceReady, motionMode }) {
+        const [index, setIndex] = useState(0);
+        const [infoOpen, setInfoOpen] = useState(false);
+        const [showMiniModal, setShowMiniModal] = useState(false);
+        const [showMiniToast, setShowMiniToast] = useState(false);
+        const current = SIMPLE_MOTION_LIST[index];
+
+        useEffect(() => {
+          setShowMiniModal(false);
+          setShowMiniToast(false);
+        }, [index]);
+
+        useEffect(() => {
+          if (current.name !== "Toast Exit") return;
+          setShowMiniToast(true);
+          const id = window.setTimeout(() => setShowMiniToast(false), 1200);
+          return () => window.clearTimeout(id);
+        }, [current.name]);
+
+        const next = () => setIndex((prev) => (prev + 1) % SIMPLE_MOTION_LIST.length);
+        const prev = () => setIndex((prev) => (prev - 1 + SIMPLE_MOTION_LIST.length) % SIMPLE_MOTION_LIST.length);
+
+        const renderExample = () => {
+          if (current.name === "List Stagger") {
+            return React.createElement(
+              "div",
+              { className: "motion-example-list" },
+              ["Row one", "Row two", "Row three"].map((label, rowIndex) =>
+                React.createElement(
+                  motion.div,
+                  {
+                    key: `${current.name}-${rowIndex}-${index}`,
+                    className: "motion-example-row",
+                    initial: { opacity: 0, y: 8 },
+                    animate: { opacity: 1, y: 0 },
+                    transition: { duration: 0.22, delay: rowIndex * 0.04, ease: [0.22, 1, 0.36, 1] }
+                  },
+                  label
+                )
+              )
+            );
+          }
+
+          if (current.name === "Modal Open") {
+            return React.createElement(
+              React.Fragment,
+              null,
+              React.createElement(
+                "button",
+                {
+                  className: "toast-control",
+                  type: "button",
+                  onClick: () => setShowMiniModal((prev) => !prev)
+                },
+                showMiniModal ? "Close mini modal" : "Open mini modal"
+              ),
+              React.createElement(
+                AnimatePresence,
+                null,
+                showMiniModal
+                  ? React.createElement(
+                      motion.div,
+                      {
+                        key: `mini-modal-${index}`,
+                        className: "motion-example-block",
+                        initial: { opacity: 0, y: 10, scale: 0.95 },
+                        animate: { opacity: 1, y: 0, scale: 1 },
+                        exit: { opacity: 0, y: 6, scale: 0.98 },
+                        transition: { duration: 0.36, ease: [0.32, 0.72, 0, 1] },
+                        style: { marginTop: "10px" }
+                      },
+                      "Modal"
+                    )
+                  : null
+              )
+            );
+          }
+
+          if (current.name === "Toast Exit") {
+            return React.createElement(
+              AnimatePresence,
+              null,
+              showMiniToast
+                ? React.createElement(
+                    motion.div,
+                    {
+                      key: `mini-toast-${index}`,
+                      className: "motion-example-toast",
+                      initial: { opacity: 0, y: 10 },
+                      animate: { opacity: 1, y: 0 },
+                      exit: { opacity: 0, y: -8 },
+                      transition: { duration: 0.2, ease: [0.22, 1, 0.36, 1] }
+                    },
+                    "Saved successfully."
+                  )
+                : React.createElement(
+                    "button",
+                    {
+                      className: "toast-control",
+                      type: "button",
+                      onClick: () => {
+                        setShowMiniToast(true);
+                        window.setTimeout(() => setShowMiniToast(false), 1200);
+                      }
+                    },
+                    "Replay toast"
+                  )
+              )
+            );
+          }
+
+          return React.createElement(
+            motion.div,
+            {
+              key: `demo-${current.name}-${index}`,
+              className: "motion-example-block",
+              initial: current.name === "Page Enter" ? { opacity: 0, y: 12 } : { opacity: 1, y: 0, scale: 1 },
+              animate: { opacity: 1, y: 0, scale: 1 },
+              whileHover: current.name === "Hover Lift" ? { y: -3, scale: 1.02 } : undefined,
+              whileTap: current.name === "Press Down" ? { scale: 0.96 } : undefined,
+              transition: {
+                duration: current.name === "Page Enter" ? 0.42 : current.name === "Press Down" ? 0.11 : 0.16,
+                ease: [0.22, 1, 0.36, 1]
+              }
+            },
+            current.name
+          );
         };
 
         return React.createElement(
-          motion.aside,
-          {
-            className: "motion-list-panel",
-            initial: { opacity: 0, y: -8, scale: 0.99 },
-            animate: { opacity: entranceReady ? 1 : 0, y: entranceReady ? 0 : -8, scale: entranceReady ? 1 : 0.99 },
-            transition: {
-              duration: motionMode === "calm" ? 0.34 : 0.42,
-              delay: motionMode === "calm" ? 0.12 : 0.16,
-              ease: [0.22, 1, 0.36, 1]
-            }
-          },
-          React.createElement("h2", { className: "motion-list-title" }, "Simple Motion List"),
+          React.Fragment,
+          null,
           React.createElement(
-            "p",
-            { className: "motion-list-subtitle" },
-            "Small default motion recipes for consistent interaction quality."
+            "div",
+            { className: "motion-info" },
+            React.createElement(
+              "button",
+              {
+                className: "motion-info-trigger",
+                type: "button",
+                onClick: () => setInfoOpen((prev) => !prev),
+                "aria-label": "Motion info"
+              },
+              "i"
+            ),
+            React.createElement(
+              AnimatePresence,
+              null,
+              infoOpen
+                ? React.createElement(
+                    motion.div,
+                    {
+                      className: "motion-info-popover",
+                      initial: { opacity: 0, y: -4, scale: 0.98 },
+                      animate: { opacity: 1, y: 0, scale: 1 },
+                      exit: { opacity: 0, y: -4, scale: 0.98 },
+                      transition: { duration: 0.18, ease: [0.22, 1, 0.36, 1] }
+                    },
+                    React.createElement("h3", { className: "motion-info-title" }, current.name),
+                    React.createElement("p", { className: "motion-info-meta" }, `${current.duration} / ${current.easing}`),
+                    React.createElement("p", { className: "motion-info-note" }, current.note)
+                  )
+                : null
+            )
           ),
           React.createElement(
-            "ul",
-            { className: "motion-list" },
-            SIMPLE_MOTION_LIST.map((item, index) =>
+            motion.section,
+            {
+              className: "motion-example-panel",
+              initial: { opacity: 0, y: 10, scale: 0.99 },
+              animate: { opacity: entranceReady ? 1 : 0, y: entranceReady ? 0 : 10, scale: entranceReady ? 1 : 0.99 },
+              transition: {
+                duration: motionMode === "calm" ? 0.34 : 0.42,
+                delay: motionMode === "calm" ? 0.12 : 0.16,
+                ease: [0.22, 1, 0.36, 1]
+              }
+            },
+            React.createElement(
+              "header",
+              { className: "motion-example-head" },
+              React.createElement("h2", { className: "motion-example-title" }, current.name),
+              React.createElement("span", { className: "motion-example-counter" }, `${index + 1}/${SIMPLE_MOTION_LIST.length}`)
+            ),
+            React.createElement(
+              "div",
+              { className: "motion-example-stage" },
               React.createElement(
-                motion.li,
-                {
-                  key: item.name,
-                  className: "motion-list-item",
-                  initial: { opacity: 0, y: 4 },
-                  animate: { opacity: entranceReady ? 1 : 0, y: entranceReady ? 0 : 4 },
-                  transition: { ...listItemTransition, delay: 0.2 + index * 0.03 }
-                },
+                AnimatePresence,
+                { mode: "wait" },
                 React.createElement(
-                  "div",
-                  { className: "motion-list-item-head" },
-                  React.createElement("span", { className: "motion-list-item-name" }, item.name),
-                  React.createElement(
-                    "span",
-                    { className: "motion-list-item-meta" },
-                    `${item.duration} / ${item.easing}`
-                  )
-                ),
-                React.createElement("p", { className: "motion-list-item-note" }, item.note)
+                  motion.div,
+                  {
+                    key: `example-stage-${current.name}-${index}`,
+                    initial: { opacity: 0, y: 6 },
+                    animate: { opacity: 1, y: 0 },
+                    exit: { opacity: 0, y: -6 },
+                    transition: { duration: 0.2, ease: [0.22, 1, 0.36, 1] }
+                  },
+                  renderExample()
+                )
               )
+            )
+            ,
+            React.createElement(
+              "div",
+              { className: "motion-example-controls" },
+              React.createElement("button", { className: "toast-control", type: "button", onClick: prev }, "Prev"),
+              React.createElement("button", { className: "toast-control", type: "button", onClick: next }, "Next")
             )
           )
         );
@@ -2033,7 +2282,7 @@
           React.createElement(LoadingStack, { motionMode, entranceReady }),
           React.createElement(ToastPanel, { motionMode, entranceReady }),
           React.createElement(DecisionDiffPanel, { motionMode, entranceReady }),
-          React.createElement(MotionListPanel, { motionMode, entranceReady }),
+          React.createElement(MotionExamples, { motionMode, entranceReady }),
           React.createElement(EmilModalDemo)
         );
       }
