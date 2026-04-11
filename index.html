@@ -591,71 +591,8 @@
         z-index: 6;
       }
 
-      .motion-info {
-        position: fixed;
-        right: 20px;
-        top: 20px;
-        z-index: 7;
-      }
-
-      .motion-info-trigger {
-        width: 34px;
-        height: 34px;
-        border-radius: 50%;
-        border: 1px solid var(--panel-line);
-        background: rgba(255, 255, 255, 0.94);
-        backdrop-filter: blur(8px) saturate(120%);
-        box-shadow:
-          0 1px 2px rgba(0, 0, 0, 0.06),
-          0 8px 20px rgba(0, 0, 0, 0.08);
-        color: #222;
-        font-size: 14px;
-        font-weight: 700;
-        cursor: pointer;
-      }
-
-      .motion-info-popover {
-        position: absolute;
-        top: 42px;
-        right: 0;
-        width: min(320px, calc(100vw - 40px));
-        border-radius: 12px;
-        border: 1px solid var(--panel-line);
-        background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(8px) saturate(120%);
-        box-shadow:
-          0 1px 2px rgba(0, 0, 0, 0.06),
-          0 10px 30px rgba(0, 0, 0, 0.08);
-        padding: 10px 12px;
-      }
-
-      .motion-info-title {
-        margin: 0;
-        color: #171717;
-        font-size: 13px;
-        font-weight: 650;
-        letter-spacing: -0.01em;
-      }
-
-      .motion-info-meta {
-        margin: 6px 0 0;
-        color: #535353;
-        font-size: 11px;
-        line-height: 1.4;
-        font-family: "IBM Plex Mono", "SF Mono", "JetBrains Mono", monospace;
-      }
-
-      .motion-info-note {
-        margin: 6px 0 0;
-        color: #505050;
-        font-size: 11px;
-        line-height: 1.35;
-      }
-
       .motion-example-panel {
         position: fixed;
-        left: 20px;
-        bottom: 20px;
         width: min(380px, calc(100vw - 40px));
         border-radius: 14px;
         border: 1px solid var(--panel-line);
@@ -666,6 +603,13 @@
           0 10px 30px rgba(0, 0, 0, 0.08);
         overflow: hidden;
         z-index: 6;
+        cursor: grab;
+        user-select: none;
+        touch-action: none;
+      }
+
+      .motion-example-panel.dragging {
+        cursor: grabbing;
       }
 
       .motion-example-head {
@@ -1007,18 +951,7 @@
           bottom: 8px;
         }
 
-        .motion-info {
-          right: 8px;
-          top: 8px;
-        }
-
-        .motion-info-popover {
-          width: min(300px, calc(100vw - 16px));
-        }
-
         .motion-example-panel {
-          left: 8px;
-          bottom: 56px;
           width: min(360px, calc(100vw - 16px));
         }
 
@@ -1070,6 +1003,21 @@
         return {
           x: loading.x,
           y: clamp(loading.y + 112, 0, window.innerHeight - 84)
+        };
+      }
+
+      function getDefaultMotionExamplesPos() {
+        const loading = getDefaultLoadingPos();
+        const width = Math.min(380, Math.max(260, window.innerWidth - 40));
+        if (window.innerWidth <= 760) {
+          return {
+            x: clamp(loading.x, 8, window.innerWidth - width - 8),
+            y: clamp(loading.y + 96, 12, window.innerHeight - 240)
+          };
+        }
+        return {
+          x: clamp(loading.x + 210, 20, window.innerWidth - width - 20),
+          y: clamp(loading.y + 104, 20, window.innerHeight - 240)
         };
       }
 
@@ -2053,9 +2001,9 @@
 
       function MotionExamples({ entranceReady, motionMode }) {
         const [index, setIndex] = useState(0);
-        const [infoOpen, setInfoOpen] = useState(false);
         const [showMiniModal, setShowMiniModal] = useState(false);
         const [showMiniToast, setShowMiniToast] = useState(false);
+        const drag = useDraggablePosition(getDefaultMotionExamplesPos);
         const current = SIMPLE_MOTION_LIST[index];
 
         useEffect(() => {
@@ -2072,6 +2020,7 @@
 
         const next = () => setIndex((prev) => (prev + 1) % SIMPLE_MOTION_LIST.length);
         const prev = () => setIndex((prev) => (prev - 1 + SIMPLE_MOTION_LIST.length) % SIMPLE_MOTION_LIST.length);
+        const stopDragOnControl = (event) => event.stopPropagation();
 
         const renderExample = () => {
           if (current.name === "List Stagger") {
@@ -2103,6 +2052,7 @@
                 {
                   className: "toast-control",
                   type: "button",
+                  onPointerDown: stopDragOnControl,
                   onClick: () => setShowMiniModal((prev) => !prev)
                 },
                 showMiniModal ? "Close mini modal" : "Open mini modal"
@@ -2151,6 +2101,7 @@
                     {
                       className: "toast-control",
                       type: "button",
+                      onPointerDown: stopDragOnControl,
                       onClick: () => {
                         setShowMiniToast(true);
                         window.setTimeout(() => setShowMiniToast(false), 1200);
@@ -2158,7 +2109,6 @@
                     },
                     "Replay toast"
                   )
-              )
             );
           }
 
@@ -2184,42 +2134,12 @@
           React.Fragment,
           null,
           React.createElement(
-            "div",
-            { className: "motion-info" },
-            React.createElement(
-              "button",
-              {
-                className: "motion-info-trigger",
-                type: "button",
-                onClick: () => setInfoOpen((prev) => !prev),
-                "aria-label": "Motion info"
-              },
-              "i"
-            ),
-            React.createElement(
-              AnimatePresence,
-              null,
-              infoOpen
-                ? React.createElement(
-                    motion.div,
-                    {
-                      className: "motion-info-popover",
-                      initial: { opacity: 0, y: -4, scale: 0.98 },
-                      animate: { opacity: 1, y: 0, scale: 1 },
-                      exit: { opacity: 0, y: -4, scale: 0.98 },
-                      transition: { duration: 0.18, ease: [0.22, 1, 0.36, 1] }
-                    },
-                    React.createElement("h3", { className: "motion-info-title" }, current.name),
-                    React.createElement("p", { className: "motion-info-meta" }, `${current.duration} / ${current.easing}`),
-                    React.createElement("p", { className: "motion-info-note" }, current.note)
-                  )
-                : null
-            )
-          ),
-          React.createElement(
             motion.section,
             {
-              className: "motion-example-panel",
+              ref: drag.ref,
+              className: `motion-example-panel${drag.dragging ? " dragging" : ""}`,
+              style: { left: `${drag.pos.x}px`, top: `${drag.pos.y}px` },
+              onPointerDown: drag.onPointerDown,
               initial: { opacity: 0, y: 10, scale: 0.99 },
               animate: { opacity: entranceReady ? 1 : 0, y: entranceReady ? 0 : 10, scale: entranceReady ? 1 : 0.99 },
               transition: {
@@ -2257,8 +2177,16 @@
             React.createElement(
               "div",
               { className: "motion-example-controls" },
-              React.createElement("button", { className: "toast-control", type: "button", onClick: prev }, "Prev"),
-              React.createElement("button", { className: "toast-control", type: "button", onClick: next }, "Next")
+              React.createElement(
+                "button",
+                { className: "toast-control", type: "button", onPointerDown: stopDragOnControl, onClick: prev },
+                "Prev"
+              ),
+              React.createElement(
+                "button",
+                { className: "toast-control", type: "button", onPointerDown: stopDragOnControl, onClick: next },
+                "Next"
+              )
             )
           )
         );
