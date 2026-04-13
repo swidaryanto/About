@@ -108,6 +108,35 @@
         touch-action: none;
       }
 
+      .loading-suite-panel {
+        position: fixed;
+        width: 180px;
+        border-radius: 16px;
+        border: 1px solid var(--panel-line);
+        background: rgba(243, 243, 243, 0.94);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+        cursor: grab;
+        user-select: none;
+        touch-action: none;
+      }
+
+      .loading-suite-panel.dragging {
+        cursor: grabbing;
+      }
+
+      .loading-suite-row {
+        min-height: 58px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 10px 12px;
+      }
+
+      .loading-suite-row + .loading-suite-row {
+        border-top: 1px solid rgba(0, 0, 0, 0.08);
+      }
+
       .braille-panel {
         position: fixed;
         display: inline-flex;
@@ -895,6 +924,16 @@
           height: 80px;
         }
 
+        .loading-suite-panel {
+          width: 180px;
+          border-radius: 14px;
+        }
+
+        .loading-suite-row {
+          min-height: 54px;
+          padding: 8px 10px;
+        }
+
         .spinners {
           gap: 30px;
         }
@@ -1032,7 +1071,7 @@
         }
         return {
           x: clamp(toast.x + toastWidth + 26, 24, window.innerWidth - 204),
-          y: clamp(toast.y + 4, 24, window.innerHeight - 104)
+          y: clamp(toast.y + 4, 24, window.innerHeight - 190)
         };
       }
 
@@ -1071,12 +1110,12 @@
           const mobileWidth = getMobileCardWidth();
           return {
             x: getMobileCenteredX(mobileWidth),
-            y: getMobileStackY(352)
+            y: getMobileStackY(272)
           };
         }
         return {
           x: clamp(loading.x + 210, 20, window.innerWidth - width - 20),
-          y: clamp(loading.y + 104, 20, window.innerHeight - 240)
+          y: clamp(loading.y + 106, 20, window.innerHeight - 240)
         };
       }
 
@@ -1105,7 +1144,7 @@
           const mobileWidth = Math.min(420, Math.max(260, window.innerWidth - 16));
           return {
             x: getMobileCenteredX(mobileWidth),
-            y: clamp(520, 160, window.innerHeight - 208)
+            y: clamp(438, 160, window.innerHeight - 208)
           };
         }
         return {
@@ -1735,6 +1774,96 @@
         };
       }
 
+      function UnifiedLoadingPanel({ motionMode, entranceReady }) {
+        const frames = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
+        const [frame, setFrame] = useState(0);
+        const [ghosts, setGhosts] = useState([]);
+        const prefersReducedMotion = useReducedMotion();
+        const drag = useDraggablePosition(getDefaultLoadingPos);
+
+        useEffect(() => {
+          if (prefersReducedMotion) {
+            setGhosts([]);
+            return;
+          }
+          const id = window.setInterval(() => {
+            setFrame((prev) => {
+              setGhosts((prevGhosts) => [prev, ...prevGhosts].slice(0, 3));
+              return (prev + 1) % frames.length;
+            });
+          }, 88);
+          return () => window.clearInterval(id);
+        }, [prefersReducedMotion]);
+
+        const frameValue = frames[prefersReducedMotion ? 0 : frame];
+
+        return React.createElement(
+          motion.section,
+          {
+            ref: drag.ref,
+            className: `loading-suite-panel${drag.dragging ? " dragging" : ""}`,
+            style: { left: `${drag.pos.x}px`, top: `${drag.pos.y}px` },
+            onPointerDown: drag.onPointerDown,
+            initial: { opacity: 0, y: 10, scale: 0.98 },
+            animate: { opacity: entranceReady ? 1 : 0, y: entranceReady ? 0 : 10, scale: entranceReady ? 1 : 0.98 },
+            transition: {
+              duration: motionMode === "calm" ? 0.34 : 0.42,
+              delay: motionMode === "calm" ? 0.12 : 0.18,
+              ease: [0.22, 1, 0.36, 1]
+            },
+            "aria-label": "Loading examples"
+          },
+          React.createElement(
+            "div",
+            { className: "loading-suite-row" },
+            React.createElement(
+              "div",
+              { className: "spinners" },
+              React.createElement("div", { className: "spinner", "aria-hidden": "true" }),
+              React.createElement("div", { className: "spinner", "aria-hidden": "true" })
+            )
+          ),
+          React.createElement(
+            "div",
+            { className: "loading-suite-row" },
+            React.createElement(
+              "span",
+              { className: "braille-slot" },
+              React.createElement("span", { className: "loading-braille", "aria-hidden": "true" }, frameValue)
+            ),
+            React.createElement(
+              "span",
+              { className: "braille-slot" },
+              React.createElement(
+                "span",
+                { className: "loading-braille loading-braille-trail", "aria-hidden": "true" },
+                ghosts[2] !== undefined
+                  ? React.createElement("span", { className: "loading-braille-layer loading-braille-ghost-3" }, frames[ghosts[2]])
+                  : null,
+                ghosts[1] !== undefined
+                  ? React.createElement("span", { className: "loading-braille-layer loading-braille-ghost-2" }, frames[ghosts[1]])
+                  : null,
+                ghosts[0] !== undefined
+                  ? React.createElement("span", { className: "loading-braille-layer loading-braille-ghost-1" }, frames[ghosts[0]])
+                  : null,
+                React.createElement("span", { className: "loading-braille-layer" }, frameValue)
+              )
+            )
+          ),
+          React.createElement(
+            "div",
+            { className: "loading-suite-row" },
+            React.createElement(
+              "div",
+              { className: "dot-pulse" },
+              React.createElement("span", { className: "dot-pulse-dot" }),
+              React.createElement("span", { className: "dot-pulse-dot" }),
+              React.createElement("span", { className: "dot-pulse-dot" })
+            )
+          )
+        );
+      }
+
       function DecisionDiffPanel({ motionMode, entranceReady }) {
         const drag = useDraggablePosition(getDefaultDiffPos);
         const stageRef = useRef(null);
@@ -2272,10 +2401,9 @@
         return React.createElement(
           React.Fragment,
           null,
-          React.createElement(BrailleSpinnerPanel, { motionMode, entranceReady }),
           React.createElement(TopCornerProgress, { motionMode, entranceReady }),
           React.createElement(CuratedTitle, { motionMode, entranceReady }),
-          React.createElement(LoadingStack, { motionMode, entranceReady }),
+          React.createElement(UnifiedLoadingPanel, { motionMode, entranceReady }),
           React.createElement(ToastPanel, { motionMode, entranceReady }),
           React.createElement(DecisionDiffPanel, { motionMode, entranceReady }),
           React.createElement(MotionExamples, { motionMode, entranceReady }),
